@@ -1,0 +1,8 @@
+class Main {
+	function void main() {
+		var BrickContainer c;
+		let c = BrickContainer.new();
+		while (true) {}
+		return;
+	}
+}

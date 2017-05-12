@@ -1,0 +1,40 @@
+
+class BrickContainer {
+	field Array bricks;
+
+	constructor BrickContainer new() {
+		// sizes 28*10, 2 gap tlbr
+		// screen width = 512x256
+		// That is 16 bricks per row
+		// Make 4 rows => 64
+
+		var int x, y;
+
+		let bricks = Array.new(64);
+		
+		while (~(y = 4)) {
+			let x = 0;
+			while (~(x = 16)) {
+				let bricks[y*16+x] = Brick.new(32*x+2, 14*y+2, 28, 10);
+				let x = x+1;
+			}
+			let y = y+1;
+		}
+
+		return this;
+	}
+
+	method void dispose() {
+		var int i;
+		var Brick b;
+		let i = 0;
+		while (~(i = 64)) {
+			let b = bricks[i];
+			do b.dispose();
+			let i = i+1;
+		}
+		do bricks.dispose();
+		do Memory.deAlloc(this);
+		return;
+	}
+}
