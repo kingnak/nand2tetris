@@ -112,6 +112,105 @@ bool CodeWriter::writeHalt()
 	return true;
 }
 
+bool CodeWriter::writeBackend()
+{
+	// Implementation for long operations, like call and return
+	if (m_dbg) m_out << "\n// CORE:\n";
+
+	////////////////////////////////////
+	// Call:
+	// - Return address must be on stack
+	// - Destination address must be in R13
+	// - D must be nArgs + 1
+	
+	if (m_dbg) m_out << "\n // CALL\n";
+	writePlaceLabel("_call");
+	writeACmd("SP");
+	m_out << "D=-D\n";
+	m_out << "D=D+M\n";
+	writeDToMem("R14");	// This is where to put ARG
+
+	writePushReg("LCL");
+	writePushReg("ARG");
+	writePushReg("THIS");
+	writePushReg("THAT");
+
+	writeACmd("R14");
+	m_out << "D=M\n";
+	writeDToMem("ARG");
+
+	// Place LCL to current SP
+	writeACmd("SP");
+	m_out << "D=M\n";
+	writeDToMem("LCL");
+
+	// Write goto
+	writeACmd("R13");
+	m_out << "A=M;JMP\n";
+
+	////////////////////////////////////
+	// Return
+	if (m_dbg) m_out << "\n // RETURN\n";
+	writePlaceLabel("_return");
+	// store frame = LCL in R13
+	writeStoreAddressInR("LCL", 0, "R13");
+
+	// Store return address = *(frame-5) in R14 (Could be overridden by *ARG = XXX for 0 arg functions...)
+	// (D = LCL)
+	writeACmd(5);
+	m_out <<
+		"A=D-A\n"
+		"D=M\n"
+		;
+	writeDToMem("R14");
+
+	// *ARG = TOS (D)
+	writeLoadSPInto('D');
+
+	m_out <<
+		"@ARG\n"
+		"A=M\n"
+		"M=D\n"
+		;
+
+	// SP = ARG+1
+	m_out <<
+		"@ARG\n"
+		"D=M+1\n"
+		;
+	writeDToMem("SP");
+
+	writeRestoreRegDecR("R13", "THAT");
+	writeRestoreRegDecR("R13", "THIS");
+	writeRestoreRegDecR("R13", "ARG");
+	writeRestoreRegDecR("R13", "LCL");
+
+	// Jump to ret addr (stored in R14)
+	m_out <<
+		"@R14\n"
+		"A=M;JMP\n"
+		;
+
+
+	/////////////////////////////////
+	// Init locals
+	// R13 must be return address
+	// D must be nr locals
+	if (m_dbg) m_out << "\n // INIT LOCALS\n";
+	writePlaceLabel("_init_lcl");
+	writePushConst('0');
+	writeACmd("_init_lcl");
+	m_out << "D=D-1;JGT\n";
+	m_out <<
+		"@R13\n"
+		"A=M;JMP\n"
+		;
+
+	if (m_dbg) m_out << "\n// END CORE\n";
+
+	return true;
+}
+
 bool CodeWriter::writeArithmetic(const string &n)
 {
 	if (m_dbg) m_out << "\n// " << n << "\n";
@@ -226,24 +325,13 @@ bool CodeWriter::writeCall(const string &func, int16_t nArgs)
 	// Push return address + registers
 	string retAddress = newLabel(func + "_return_", false, false);
 	writePushVar(retAddress);
-	writePushReg("LCL");
-	writePushReg("ARG");
-	writePushReg("THIS");
-	writePushReg("THAT");
 	
-	// reposition ARG to SP-nArgs-5
-	writeACmd("SP");
-	m_out << "D=M\n";
-	writeACmd(5 + nArgs);
-	m_out << "D=D-A\n";
-	writeDToMem("ARG");
-	
-	// Place LCL to current SP
-	writeACmd("SP");
-	m_out << "D=M\n";
-	writeDToMem("LCL");
-	// Write goto
-	writeGotoInt(func);
+	writeACmd(func);
+	m_out << "D=A\n";
+	writeDToMem("R13");
+	writeACmd(nArgs);
+	m_out << "D=A+1\n";
+	writeGotoInt("_call");
 
 	// Write return label
 	writePlaceLabel(retAddress);
@@ -264,22 +352,31 @@ bool CodeWriter::writeFunction(const string &func, int16_t nVars)
 	case 0:
 		// Nothing to do
 		break;
-	case 2:
-		// 4 commands
-		writePushConst('0');
-		// fallthrough
 	case 1:
 		// 4 commands
 		writePushConst('0');
 		break;
+	case 2:
+		// 7 commands
+		writeACmd("SP");
+		m_out << 
+			"M=M+1\n"
+			"M=M+1\n"
+			"A=M-1\n"
+			"M=0\n"
+			"A=A-1\n"
+			"M=0\n";
+		break;
 	default:
-		// 9 commands
+		// Jump to default local init
+		// 8 Commands
+		auto lbl = writeLoadNewLabel(func + "_init_", false, false);
+		m_out << "D=A\n";
+		writeDToMem("R13");
 		writeACmd(nVars);
 		m_out << "D=A\n";
-		auto lbl = writePlaceNewLabel(func + "_init_", false, false);
-		writePushConst('0');
-		writeACmd(lbl);
-		m_out << "D=D-1;JGT\n";
+		writeGotoInt("_init_lcl");
+		writePlaceLabel(lbl);
 		break;
 	}
 	return true;
@@ -289,45 +386,8 @@ bool CodeWriter::writeReturn()
 {
 	if (m_dbg) m_out << "\n// return\n";
 
-	// store frame = LCL in R13
-	writeStoreAddressInR("LCL", 0, "R13");
-
-	// Store return address = *(frame-5) in R14 (Could be overridden by *ARG = XXX for 0 arg functions...)
-	// (D = LCL)
-	writeACmd(5);
-	m_out <<
-		"A=D-A\n"
-		"D=M\n"
-		;
-	writeDToMem("R14");
-
-	// *ARG = TOS (D)
-	writeLoadSPInto('D');
+	writeGotoInt("_return");
 	
-	m_out <<
-		"@ARG\n"
-		"A=M\n"
-		"M=D\n"
-		;
-
-	// SP = ARG+1
-	m_out <<
-		"@ARG\n"
-		"D=M+1\n"
-		;
-	writeDToMem("SP");
-
-	writeRestoreRegDecR("R13", "THAT");
-	writeRestoreRegDecR("R13", "THIS");
-	writeRestoreRegDecR("R13", "ARG");
-	writeRestoreRegDecR("R13", "LCL");
-
-	// Jump to ret addr (stored in R14)
-	m_out <<
-		"@R14\n"
-		"A=M\n"
-		"0;JMP\n"
-		;
 	return true;
 }
 

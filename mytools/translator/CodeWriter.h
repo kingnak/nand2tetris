@@ -16,6 +16,8 @@ public:
 	bool writeBootstrap();
 	bool writeMinimalBootstrap();
 	bool writeHalt();
+	bool writeBackend();
+
 	bool writeArithmetic(const string &n);
 	bool writePush(const string &seg, int16_t off);
 	bool writePop(const string &seg, int16_t off);

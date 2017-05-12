@@ -27,7 +27,9 @@ bool Translator::minimalBootstrap()
 	if (m_bootStrapType != NoBootstrap) return m_errs.addError(ErrorContainer::Fail, "Bootstrapping code already written", 0);
 	m_bootStrapType = MiniBootstrap;
 	addCall("Sys.init", CallSite{ "{Bootstrap}",0 }, 0);
-	return m_cw->writeMinimalBootstrap();
+	bool ok = m_cw->writeMinimalBootstrap();
+	ok &= m_cw->writeBackend();
+	return ok;
 }
 
 bool Translator::bootstrap()
@@ -36,7 +38,9 @@ bool Translator::bootstrap()
 	m_bootStrapType = FullBootstrap;
 	addCall("Sys.init", CallSite{ "{Bootstrap}", 0 }, 0);
 	addCall("Sys.halt", CallSite{ "{Bootstrap}", 0 }, 0);
-	return m_cw->writeBootstrap();
+	bool ok = m_cw->writeBootstrap();
+	ok &= m_cw->writeBackend();
+	return ok;
 }
 
 bool Translator::teardown()
@@ -45,7 +49,7 @@ bool Translator::teardown()
 		// Check for custom Sys.halt
 		if (m_funcs.find("Sys.halt") == m_funcs.end()) {
 			m_funcs.emplace(make_pair("Sys.halt", 0));
-			m_cw->writeHalt();
+			if (!m_cw->writeHalt()) return false;
 		}
 	}
 	return true;
