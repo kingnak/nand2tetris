@@ -14,7 +14,7 @@ public:
 	Translator(std::ostream &out);
 	~Translator();
 
-	bool minimalBootstrap();
+	bool minimalBootstrap(bool stackOffset);
 	bool bootstrap();
 	bool teardown();
 	bool translate(std::istream &in, const std::string &fn);

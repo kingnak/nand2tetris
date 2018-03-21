@@ -39,16 +39,17 @@ const CodeWriter::StaticSegCodes CodeWriter::s_statSegs = {
 CodeWriter::CodeWriter(ostream &o) 
 	: m_out(o)
 	, m_dbg(false) 
+	, m_bare(false)
 {
 }
 
-bool CodeWriter::writeMinimalBootstrap()
+bool CodeWriter::writeMinimalBootstrap(bool stackOffset)
 {
 	if (m_dbg) m_out << "// Bootstrap\n";
 
 	// No frame for Sys.init.
 	// Just set SP and LCL, and call
-	writeACmd(256);
+	writeACmd(256 + (stackOffset ? 5 : 0));
 	m_out << "D=A\n";
 	writeDToMem("SP");
 	writeDToMem("LCL");
@@ -114,6 +115,8 @@ bool CodeWriter::writeHalt()
 
 bool CodeWriter::writeBackend()
 {
+	if (m_bare) return true;
+
 	// Implementation for long operations, like call and return
 	if (m_dbg) m_out << "\n// CORE:\n";
 
@@ -191,7 +194,7 @@ bool CodeWriter::writeBackend()
 		"A=M;JMP\n"
 		;
 
-
+#if 0
 	/////////////////////////////////
 	// Init locals
 	// R13 must be return address
@@ -205,7 +208,7 @@ bool CodeWriter::writeBackend()
 		"@R13\n"
 		"A=M;JMP\n"
 		;
-
+#endif
 	if (m_dbg) m_out << "\n// END CORE\n";
 
 	return true;
@@ -322,6 +325,15 @@ bool CodeWriter::writeCall(const string &func, int16_t nArgs)
 {
 	if (m_dbg) m_out << "\n// call " << func << ' ' << nArgs << '\n';
 
+	if (m_bare)
+		writeCallBare(func, nArgs);
+	else
+		writeCallBacked(func, nArgs);
+	return true;
+}
+
+void CodeWriter::writeCallBacked(const string &func, int16_t nArgs)
+{
 	// Push return address + registers
 	string retAddress = newLabel(func + "_return_", false, false);
 	writePushVar(retAddress);
@@ -335,7 +347,34 @@ bool CodeWriter::writeCall(const string &func, int16_t nArgs)
 
 	// Write return label
 	writePlaceLabel(retAddress);
-	return true;
+}
+
+void CodeWriter::writeCallBare(const string &func, int16_t nArgs)
+{
+	// Push return address + registers
+	string retAddress = newLabel(func + "_return_", false, false);
+	writePushVar(retAddress);
+	writePushReg("LCL");
+	writePushReg("ARG");
+	writePushReg("THIS");
+	writePushReg("THAT");
+
+	// reposition ARG to SP-nArgs-5
+	writeACmd("SP");
+	m_out << "D=M\n";
+	writeACmd(5 + nArgs);
+	m_out << "D=D-A\n";
+	writeDToMem("ARG");
+
+	// Place LCL to current SP
+	writeACmd("SP");
+	m_out << "D=M\n";
+	writeDToMem("LCL");
+	// Write goto
+	writeGotoInt(func);
+
+	// Write return label
+	writePlaceLabel(retAddress);
 }
 
 bool CodeWriter::writeFunction(const string &func, int16_t nVars)
@@ -368,15 +407,29 @@ bool CodeWriter::writeFunction(const string &func, int16_t nVars)
 			"M=0\n";
 		break;
 	default:
-		// Jump to default local init
-		// 8 Commands
-		auto lbl = writeLoadNewLabel(func + "_init_", false, false);
-		m_out << "D=A\n";
-		writeDToMem("R13");
-		writeACmd(nVars);
-		m_out << "D=A\n";
-		writeGotoInt("_init_lcl");
-		writePlaceLabel(lbl);
+#if 0
+		if (!m_bare) {
+			// Jump to default local init
+			// 8 Commands
+			auto lbl = writeLoadNewLabel(func + "_init_", false, false);
+			m_out << "D=A\n";
+			writeDToMem("R13");
+			writeACmd(nVars);
+			m_out << "D=A\n";
+			writeGotoInt("_init_lcl");
+			writePlaceLabel(lbl);
+		} else
+#endif
+		{
+			// Loop push on stack
+			// 8 Commands
+			writeACmd(stringify(nVars));
+			m_out << "D=A\n";
+			writePlaceLabel(func + "_init_lcl");
+			writePushConst('0');
+			writeACmd(func + "_init_lcl");
+			m_out << "D=D-1;JGT\n";
+		}
 		break;
 	}
 	return true;
@@ -386,9 +439,55 @@ bool CodeWriter::writeReturn()
 {
 	if (m_dbg) m_out << "\n// return\n";
 
-	writeGotoInt("_return");
+	if (m_bare)
+		writeReturnBare();
+	else
+		writeGotoInt("_return");
 	
 	return true;
+}
+
+void CodeWriter::writeReturnBare()
+{
+	// store frame = LCL in R13
+	writeStoreAddressInR("LCL", 0, "R13");
+
+	// Store return address = *(frame-5) in R14 (Could be overridden by *ARG = XXX for 0 arg functions...)
+	// (D = LCL)
+	writeACmd(5);
+	m_out <<
+		"A=D-A\n"
+		"D=M\n"
+		;
+	writeDToMem("R14");
+
+	// *ARG = TOS (D)
+	writeLoadSPInto('D');
+
+	m_out <<
+		"@ARG\n"
+		"A=M\n"
+		"M=D\n"
+		;
+
+	// SP = ARG+1
+	m_out <<
+		"@ARG\n"
+		"D=M+1\n"
+		;
+	writeDToMem("SP");
+
+	writeRestoreRegDecR("R13", "THAT");
+	writeRestoreRegDecR("R13", "THIS");
+	writeRestoreRegDecR("R13", "ARG");
+	writeRestoreRegDecR("R13", "LCL");
+
+	// Jump to ret addr (stored in R14)
+	m_out <<
+		"@R14\n"
+		"A=M\n"
+		"0;JMP\n"
+		;
 }
 
 void CodeWriter::writeBinary(const string &op)

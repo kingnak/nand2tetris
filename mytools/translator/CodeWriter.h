@@ -12,9 +12,10 @@ public:
 	CodeWriter(std::ostream &o);
 	void setDebug(bool dbg) { m_dbg = dbg;  }
 	void setFileName(const string &n) { m_fn = n; }
+	void setBare(bool bare) { m_bare = bare; }
 
 	bool writeBootstrap();
-	bool writeMinimalBootstrap();
+	bool writeMinimalBootstrap(bool stackOffset);
 	bool writeHalt();
 	bool writeBackend();
 
@@ -33,6 +34,10 @@ private:
 	void writeBinary(const string &op);
 	void writeCompare(const string &cmp);
 	void writeCompareSimple(const string &cmp);
+
+	void writeCallBacked(const string &func, int16_t nArgs);
+	void writeCallBare(const string &func, int16_t nArgs);
+	void writeReturnBare();
 
 	void writeUnaryHeader();
 	void writeBinaryHeader();
@@ -81,6 +86,7 @@ private:
 	std::ostream &m_out;
 	string m_fn;
 	bool m_dbg;
+	bool m_bare;
 
 	std::unordered_map<string, int16_t> m_nextLbl;
 

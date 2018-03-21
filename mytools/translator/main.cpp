@@ -11,16 +11,21 @@ using namespace  std;
 int main(int argc, char **argv)
 {
 	enum {
-		MinBootstrap = CmdLineHelper::CustomArgBase,
-		BareOutput = CmdLineHelper::CustomArgBase<<1
+		NoBootstrap = CmdLineHelper::CustomArgBase,
+		MinBootstrap = CmdLineHelper::CustomArgBase<<1,
+		StackOffset = CmdLineHelper::CustomArgBase<<2,
+		BareOutput = CmdLineHelper::CustomArgBase<<3
 	};
 
 
 	CmdLineHelper c;
 	c.allowEmptyIn();
 	c.addDefaultArgs(CmdLineHelper::Help | CmdLineHelper::Debug);
+	c.addCustomArg("-nb", "--no-bootstrap", NoBootstrap);
 	c.addCustomArg("-mb", "--min-bootstrap", MinBootstrap);
+	c.addCustomArg("-os", "--offset-stack", StackOffset);
 	c.addCustomArg("", "--bare", BareOutput);
+
 	if (!c.handleCmdLine(argc, argv) || c.isHelp()) {
 		cerr << c.usage() << endl;
 		return 1;
@@ -54,10 +59,15 @@ int main(int argc, char **argv)
 	t.setDebug(c.isDebug());
 	t.setBare(c.isFlagSet(BareOutput));
 
-	if (c.isFlagSet(MinBootstrap)) {
-		t.minimalBootstrap();
-	} else {
-		t.bootstrap();
+	if (!c.isFlagSet(NoBootstrap)) {
+		if (c.isFlagSet(MinBootstrap)) {
+			if (c.isFlagSet(StackOffset))
+				t.minimalBootstrap(true);
+			else
+				t.minimalBootstrap(false);
+		} else {
+			t.bootstrap();
+		}
 	}
 
 	for (auto fi : files) {
