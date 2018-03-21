@@ -236,6 +236,11 @@ void Translator::setBare(bool bare)
 	m_cw->setBare(bare);
 }
 
+void Translator::setReturnValOpt(bool opt)
+{
+	m_cw->setReturnValOpt(opt);
+}
+
 bool Translator::checkEndFunction(int16_t line)
 {
 	if (m_curFunc.empty()) 

@@ -23,6 +23,7 @@ public:
 	const ErrorContainer &errors() const { return m_errs; }
 	void setDebug(bool dbg);
 	void setBare(bool bare);
+	void setReturnValOpt(bool opt);
 
 	bool verifyCalls();
 

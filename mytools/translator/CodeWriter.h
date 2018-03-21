@@ -13,6 +13,7 @@ public:
 	void setDebug(bool dbg) { m_dbg = dbg;  }
 	void setFileName(const string &n) { m_fn = n; }
 	void setBare(bool bare) { m_bare = bare; }
+	void setReturnValOpt(bool opt) { m_retValOpt = opt; }
 
 	bool writeCompactBootstrap();
 	bool writeHaltBootstrap();
@@ -89,6 +90,7 @@ private:
 	string m_fn;
 	bool m_dbg;
 	bool m_bare;
+	bool m_retValOpt;
 
 	std::unordered_map<string, int16_t> m_nextLbl;
 

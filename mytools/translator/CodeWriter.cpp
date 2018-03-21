@@ -40,6 +40,7 @@ CodeWriter::CodeWriter(ostream &o)
 	: m_out(o)
 	, m_dbg(false) 
 	, m_bare(false)
+	, m_retValOpt(false)
 {
 }
 
@@ -88,8 +89,15 @@ bool CodeWriter::writeHaltBootstrap()
 	m_out << "D=A\n";	// D = 256
 	m_out << "A=A+1\n";	// Return frame's LCL (at 257) is 257
 	m_out << "M=D+1\n";
-	writeDToMem("ARG"); // The argument pointer is TOS
-	
+	if (m_retValOpt) {
+		// Make place for return value
+		m_out << 
+			"@ARG\n"
+			"M=D+1\n";
+	} else {
+		writeDToMem("ARG"); // The argument pointer is TOS
+	}
+
 	writeACmd(256 + 5);	// +Size of Frame
 	m_out << "D=A\n";
 	writeDToMem("SP");	// SP and LCL are located here
@@ -295,6 +303,15 @@ bool CodeWriter::writeCall(const string &func, int16_t nArgs)
 {
 	if (m_dbg) m_out << "\n// call " << func << ' ' << nArgs << '\n';
 
+	if (m_retValOpt && nArgs == 0) {
+		// Make place for the return value on stack
+		// (So return protocol won't overwrite return address)
+		m_out <<
+			"@SP\n"
+			"M=M+1\n";
+		nArgs = 1;
+	}
+
 	if (m_bare)
 		writeCallBare(func, nArgs);
 	else
@@ -422,18 +439,19 @@ void CodeWriter::writeReturnBare()
 	// store frame = LCL in R13
 	writeStoreAddressInR("LCL", 0, "R13");
 
-	// Store return address = *(frame-5) in R14 (Could be overridden by *ARG = XXX for 0 arg functions...)
-	// (D = LCL)
-	writeACmd(5);
-	m_out <<
-		"A=D-A\n"
-		"D=M\n"
-		;
-	writeDToMem("R14");
+	if (!m_retValOpt) {
+		// Store return address = *(frame-5) in R14 (Could be overridden by *ARG = XXX for 0 arg functions...)
+		// (D = LCL)
+		writeACmd(5);
+		m_out <<
+			"A=D-A\n"
+			"D=M\n"
+			;
+		writeDToMem("R14");
+	}
 
 	// *ARG = TOS (D)
 	writeLoadSPInto('D');
-
 	m_out <<
 		"@ARG\n"
 		"A=M\n"
@@ -452,12 +470,19 @@ void CodeWriter::writeReturnBare()
 	writeRestoreRegDecR("R13", "ARG");
 	writeRestoreRegDecR("R13", "LCL");
 
-	// Jump to ret addr (stored in R14)
-	m_out <<
-		"@R14\n"
-		"A=M\n"
-		"0;JMP\n"
-		;
+	if (!m_retValOpt) {
+		// Jump to ret addr (stored in R14)
+		m_out <<
+			"@R14\n"
+			"A=M;JMP\n"
+			;
+	} else {
+		m_out <<
+			"@R13\n"
+			"A=M-1\n"
+			"A=M;JMP\n"
+			;
+	}
 }
 
 void CodeWriter::writeBinary(const string &op)

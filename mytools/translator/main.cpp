@@ -17,6 +17,7 @@ int main(int argc, char **argv)
 		HaltBootstrap = CmdLineHelper::CustomArgBase<<3,
 		StackOffset = CmdLineHelper::CustomArgBase<<4,
 		BareOutput = CmdLineHelper::CustomArgBase<<5,
+		ReturnValOpt = CmdLineHelper::CustomArgBase<<6
 	};
 
 
@@ -28,6 +29,7 @@ int main(int argc, char **argv)
 	c.addCustomArg("-cb", "--compact-bootstrap", CompactBootstrap);
 	c.addCustomArg("-hb", "--halt-bootstrap", HaltBootstrap);
 	c.addCustomArg("-os", "--offset-stack", StackOffset);
+	c.addCustomArg("-ro", "--return-opt", ReturnValOpt);
 	c.addCustomArg("", "--bare", BareOutput);
 
 	if (!c.handleCmdLine(argc, argv) || c.isHelp()) {
@@ -62,6 +64,7 @@ int main(int argc, char **argv)
 	Translator t(out);
 	t.setDebug(c.isDebug());
 	t.setBare(c.isFlagSet(BareOutput));
+	t.setReturnValOpt(c.isFlagSet(ReturnValOpt));
 
 	if (!c.isFlagSet(NoBootstrap)) {
 		if (c.isFlagSet(MinBootstrap)) {
