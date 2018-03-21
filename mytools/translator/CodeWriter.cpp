@@ -57,11 +57,23 @@ bool CodeWriter::writeMinimalBootstrap(bool stackOffset)
 	return true;
 }
 
-bool CodeWriter::writeBootstrap()
+bool CodeWriter::writeFullBootstrap()
+{
+	if (m_dbg) m_out << "// Bootstrap\n";
+	
+	//Full Bootstrap:
+	// Set SP to 256 and call Sys.init
+	writeACmd(256);
+	m_out << "D=A\n";
+	writeDToMem("SP");
+	writeCall("Sys.init", 0);
+	return true;
+}
+
+bool CodeWriter::writeHaltBootstrap()
 {
 	if (m_dbg) m_out << "// Bootstrap\n";
 
-#if 1
 	// Create stack frame and call Sys.init
 	// RAM[0-5] = 261 261 256 0 0, RAM[256] = @ret
 	
@@ -91,17 +103,13 @@ bool CodeWriter::writeBootstrap()
 		"M=0\n"
 		;
 	writeGotoInt("Sys.init");
-
-#else
-	//Full Bootstrap:
-	// Set SP to 256 and call Sys.init
-	writeACmd(256);
-	m_out << "D=A\n";
-	writeDToMem("SP");
-	writeCall("Sys.init", 0);
-#endif
-
 	return true;
+}
+
+bool CodeWriter::writeCompactBootstrap()
+{
+	// What's the difference??
+	return writeMinimalBootstrap(true);
 }
 
 bool CodeWriter::writeHalt()
@@ -129,8 +137,7 @@ bool CodeWriter::writeBackend()
 	if (m_dbg) m_out << "\n // CALL\n";
 	writePlaceLabel("_call");
 	writeACmd("SP");
-	m_out << "D=-D\n";
-	m_out << "D=D+M\n";
+	m_out << "D=M-D\n";
 	writeDToMem("R14");	// This is where to put ARG
 
 	writePushReg("LCL");
@@ -155,44 +162,7 @@ bool CodeWriter::writeBackend()
 	// Return
 	if (m_dbg) m_out << "\n // RETURN\n";
 	writePlaceLabel("_return");
-	// store frame = LCL in R13
-	writeStoreAddressInR("LCL", 0, "R13");
-
-	// Store return address = *(frame-5) in R14 (Could be overridden by *ARG = XXX for 0 arg functions...)
-	// (D = LCL)
-	writeACmd(5);
-	m_out <<
-		"A=D-A\n"
-		"D=M\n"
-		;
-	writeDToMem("R14");
-
-	// *ARG = TOS (D)
-	writeLoadSPInto('D');
-
-	m_out <<
-		"@ARG\n"
-		"A=M\n"
-		"M=D\n"
-		;
-
-	// SP = ARG+1
-	m_out <<
-		"@ARG\n"
-		"D=M+1\n"
-		;
-	writeDToMem("SP");
-
-	writeRestoreRegDecR("R13", "THAT");
-	writeRestoreRegDecR("R13", "THIS");
-	writeRestoreRegDecR("R13", "ARG");
-	writeRestoreRegDecR("R13", "LCL");
-
-	// Jump to ret addr (stored in R14)
-	m_out <<
-		"@R14\n"
-		"A=M;JMP\n"
-		;
+	writeReturnBare();
 
 #if 0
 	/////////////////////////////////

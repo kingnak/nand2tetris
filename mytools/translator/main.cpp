@@ -13,8 +13,10 @@ int main(int argc, char **argv)
 	enum {
 		NoBootstrap = CmdLineHelper::CustomArgBase,
 		MinBootstrap = CmdLineHelper::CustomArgBase<<1,
-		StackOffset = CmdLineHelper::CustomArgBase<<2,
-		BareOutput = CmdLineHelper::CustomArgBase<<3
+		CompactBootstrap = CmdLineHelper::CustomArgBase<<2,
+		HaltBootstrap = CmdLineHelper::CustomArgBase<<3,
+		StackOffset = CmdLineHelper::CustomArgBase<<4,
+		BareOutput = CmdLineHelper::CustomArgBase<<5,
 	};
 
 
@@ -23,6 +25,8 @@ int main(int argc, char **argv)
 	c.addDefaultArgs(CmdLineHelper::Help | CmdLineHelper::Debug);
 	c.addCustomArg("-nb", "--no-bootstrap", NoBootstrap);
 	c.addCustomArg("-mb", "--min-bootstrap", MinBootstrap);
+	c.addCustomArg("-cb", "--compact-bootstrap", CompactBootstrap);
+	c.addCustomArg("-hb", "--halt-bootstrap", HaltBootstrap);
 	c.addCustomArg("-os", "--offset-stack", StackOffset);
 	c.addCustomArg("", "--bare", BareOutput);
 
@@ -65,8 +69,12 @@ int main(int argc, char **argv)
 				t.minimalBootstrap(true);
 			else
 				t.minimalBootstrap(false);
+		} else if (c.isFlagSet(HaltBootstrap)) {
+			t.haltBootstrap();
+		} else if (c.isFlagSet(CompactBootstrap)) {
+			t.compactBootstrap();
 		} else {
-			t.bootstrap();
+			t.fullBootstrap();
 		}
 	}
 

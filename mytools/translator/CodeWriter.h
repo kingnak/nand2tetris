@@ -14,8 +14,10 @@ public:
 	void setFileName(const string &n) { m_fn = n; }
 	void setBare(bool bare) { m_bare = bare; }
 
-	bool writeBootstrap();
+	bool writeCompactBootstrap();
+	bool writeHaltBootstrap();
 	bool writeMinimalBootstrap(bool stackOffset);
+	bool writeFullBootstrap();
 	bool writeHalt();
 	bool writeBackend();
 

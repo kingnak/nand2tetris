@@ -27,26 +27,46 @@ bool Translator::minimalBootstrap(bool stackOffset)
 {
 	if (m_bootStrapType != NoBootstrap) return m_errs.addError(ErrorContainer::Fail, "Bootstrapping code already written", 0);
 	m_bootStrapType = MiniBootstrap;
-	addCall("Sys.init", CallSite{ "{Bootstrap}",0 }, 0);
+	addCall("Sys.init", CallSite{ "{Bootstrap}", 0 }, 0);
 	bool ok = m_cw->writeMinimalBootstrap(stackOffset);
 	ok &= m_cw->writeBackend();
 	return ok;
 }
 
-bool Translator::bootstrap()
+bool Translator::haltBootstrap()
+{
+	if (m_bootStrapType != NoBootstrap) return m_errs.addError(ErrorContainer::Fail, "Bootstrapping code already written", 0);
+	m_bootStrapType = HaltBootstrap;
+	addCall("Sys.init", CallSite{ "{Bootstrap}", 0 }, 0);
+	addCall("Sys.halt", CallSite{ "{Bootstrap}", 0 }, 0);
+	bool ok = m_cw->writeHaltBootstrap();
+	ok &= m_cw->writeBackend();
+	return ok;
+}
+
+bool Translator::compactBootstrap()
+{
+	if (m_bootStrapType != NoBootstrap) return m_errs.addError(ErrorContainer::Fail, "Bootstrapping code already written", 0);
+	m_bootStrapType = CompactBootstrap;
+	addCall("Sys.init", CallSite{ "{Bootstrap}",0 }, 0);
+	bool ok = m_cw->writeCompactBootstrap();
+	ok &= m_cw->writeBackend();
+	return ok;
+}
+
+bool Translator::fullBootstrap()
 {
 	if (m_bootStrapType != NoBootstrap) return m_errs.addError(ErrorContainer::Fail, "Bootstrapping code already written", 0);
 	m_bootStrapType = FullBootstrap;
 	addCall("Sys.init", CallSite{ "{Bootstrap}", 0 }, 0);
-	addCall("Sys.halt", CallSite{ "{Bootstrap}", 0 }, 0);
-	bool ok = m_cw->writeBootstrap();
+	bool ok = m_cw->writeFullBootstrap();
 	ok &= m_cw->writeBackend();
 	return ok;
 }
 
 bool Translator::teardown()
 {
-	if (m_bootStrapType == FullBootstrap) {
+	if (m_bootStrapType == HaltBootstrap) {
 		// Check for custom Sys.halt
 		if (m_funcs.find("Sys.halt") == m_funcs.end()) {
 			m_funcs.emplace(make_pair("Sys.halt", 0));
@@ -267,9 +287,11 @@ bool Translator::checkReturn()
 {
 	switch (m_bootStrapType) {
 	case MiniBootstrap:
+	case FullBootstrap:
+	case CompactBootstrap:
 		if (m_curFunc == "Sys.init") return false;
 		return true;
-	case FullBootstrap:
+	case HaltBootstrap:
 		if (m_curFunc == "Sys.halt") return false;
 		return true;
 	}

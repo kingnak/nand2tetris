@@ -15,7 +15,9 @@ public:
 	~Translator();
 
 	bool minimalBootstrap(bool stackOffset);
-	bool bootstrap();
+	bool fullBootstrap();
+	bool haltBootstrap();
+	bool compactBootstrap();
 	bool teardown();
 	bool translate(std::istream &in, const std::string &fn);
 	const ErrorContainer &errors() const { return m_errs; }
@@ -71,8 +73,10 @@ private:
 	std::unordered_set<std::string> m_funcLabels;
 
 	enum {
-		NoBootstrap,
-		MiniBootstrap,
-		FullBootstrap
+		NoBootstrap,	// No bootstrapping active
+		MiniBootstrap,	// Minimal bootstrap. Calls Sys.init without return frame. Can simulate SP as if a call frame was present
+		FullBootstrap,	// Fully compliant Bootstrap. Sets SP and calls Sys.init (cannot return!)
+		CompactBootstrap,	// Optimized full bootstrap
+		HaltBootstrap	// Optimized bootstrap, where Sys.init will return to Sys.Halt (default provided if not given)
 	} m_bootStrapType;
 };
