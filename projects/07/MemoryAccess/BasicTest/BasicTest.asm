@@ -159,11 +159,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D+A
-@SP
-A=M-1
-M=D
+M=D+M
 
 // push argument 1
 @ARG
@@ -179,11 +175,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=A-D
-@SP
-A=M-1
-M=D
+M=M-D
 
 // push this 6
 @THIS
@@ -212,22 +204,14 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D+A
-@SP
-A=M-1
-M=D
+M=D+M
 
 // sub
 @SP
 AM=M-1
 D=M
 A=A-1
-A=M
-D=A-D
-@SP
-A=M-1
-M=D
+M=M-D
 
 // push temp 6
 @11
@@ -242,8 +226,4 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D+A
-@SP
-A=M-1
-M=D
+M=D+M

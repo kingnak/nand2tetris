@@ -1,53 +1,12 @@
 // Bootstrap
-@256
+@261
 D=A
 @SP
 M=D
-
-// call Sys.init 0
-@_return_.0
-D=A
-@SP
-M=M+1
-A=M-1
-M=D
-@LCL
-D=M
-@SP
-M=M+1
-A=M-1
-M=D
-@ARG
-D=M
-@SP
-M=M+1
-A=M-1
-M=D
-@THIS
-D=M
-@SP
-M=M+1
-A=M-1
-M=D
-@THAT
-D=M
-@SP
-M=M+1
-A=M-1
-M=D
-@SP
-D=M
-@5
-D=D-A
-@ARG
-M=D
-@SP
-D=M
 @LCL
 M=D
 @Sys.init
 0;JMP
-(_return_.0)
 
 // function Class1.set 0
 (Class1.set)
@@ -160,11 +119,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=A-D
-@SP
-A=M-1
-M=D
+M=M-D
 
 // return
 @LCL
@@ -321,11 +276,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=A-D
-@SP
-A=M-1
-M=D
+M=M-D
 
 // return
 @LCL
@@ -391,7 +342,7 @@ A=M-1
 M=D
 
 // call Class1.set 2
-@_return_Sys.1
+@Class1.set_return_0
 D=A
 @SP
 M=M+1
@@ -433,7 +384,7 @@ D=M
 M=D
 @Class1.set
 0;JMP
-(_return_Sys.1)
+(Class1.set_return_0)
 
 // pop temp 0
 @SP
@@ -459,7 +410,7 @@ A=M-1
 M=D
 
 // call Class2.set 2
-@_return_Sys.2
+@Class2.set_return_0
 D=A
 @SP
 M=M+1
@@ -501,7 +452,7 @@ D=M
 M=D
 @Class2.set
 0;JMP
-(_return_Sys.2)
+(Class2.set_return_0)
 
 // pop temp 0
 @SP
@@ -511,7 +462,7 @@ D=M
 M=D
 
 // call Class1.get 0
-@_return_Sys.3
+@Class1.get_return_0
 D=A
 @SP
 M=M+1
@@ -553,10 +504,10 @@ D=M
 M=D
 @Class1.get
 0;JMP
-(_return_Sys.3)
+(Class1.get_return_0)
 
 // call Class2.get 0
-@_return_Sys.4
+@Class2.get_return_0
 D=A
 @SP
 M=M+1
@@ -598,11 +549,11 @@ D=M
 M=D
 @Class2.get
 0;JMP
-(_return_Sys.4)
+(Class2.get_return_0)
 
-// label WHILE
-(WHILE)
+// label Sys.init$WHILE
+(Sys.init$WHILE)
 
-// goto WHILE
-@WHILE
+// goto Sys.init$WHILE
+@Sys.init$WHILE
 0;JMP

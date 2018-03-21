@@ -20,8 +20,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D-A
+D=D-M
 @_cond_StackTest.0
 D;JEQ
 D=-1
@@ -52,8 +51,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D-A
+D=D-M
 @_cond_StackTest.1
 D;JEQ
 D=-1
@@ -84,8 +82,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D-A
+D=D-M
 @_cond_StackTest.2
 D;JEQ
 D=-1
@@ -116,8 +113,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D-A
+D=D-M
 @_cond_t_StackTest.0
 D;JLE
 D=-1
@@ -151,8 +147,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D-A
+D=D-M
 @_cond_t_StackTest.1
 D;JLE
 D=-1
@@ -186,8 +181,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D-A
+D=D-M
 @_cond_t_StackTest.2
 D;JLE
 D=-1
@@ -221,8 +215,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D-A
+D=D-M
 @_cond_t_StackTest.3
 D;JGE
 D=-1
@@ -256,8 +249,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D-A
+D=D-M
 @_cond_t_StackTest.4
 D;JGE
 D=-1
@@ -291,8 +283,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D-A
+D=D-M
 @_cond_t_StackTest.5
 D;JGE
 D=-1
@@ -334,11 +325,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D+A
-@SP
-A=M-1
-M=D
+M=D+M
 
 // push constant 112
 @112
@@ -353,31 +340,19 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=A-D
-@SP
-A=M-1
-M=D
+M=M-D
 
 // neg
 @SP
 A=M-1
-D=M
-D=-D
-@SP
-A=M-1
-M=D
+M=-M
 
 // and
 @SP
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D&A
-@SP
-A=M-1
-M=D
+M=D&M
 
 // push constant 82
 @82
@@ -392,17 +367,9 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D|A
-@SP
-A=M-1
-M=D
+M=D|M
 
 // not
 @SP
 A=M-1
-D=M
-D=!D
-@SP
-A=M-1
-M=D
+M=!M

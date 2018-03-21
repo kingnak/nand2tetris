@@ -1,13 +1,12 @@
 
-// label SimpleFunction.SimpleFunction.test
-(SimpleFunction.SimpleFunction.test)
+// function SimpleFunction.test 2
+(SimpleFunction.test)
 @SP
+M=M+1
 M=M+1
 A=M-1
 M=0
-@SP
-M=M+1
-A=M-1
+A=A-1
 M=0
 
 // push local 0
@@ -33,20 +32,12 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D+A
-@SP
-A=M-1
-M=D
+M=D+M
 
 // not
 @SP
 A=M-1
-D=M
-D=!D
-@SP
-A=M-1
-M=D
+M=!M
 
 // push argument 0
 @ARG
@@ -62,11 +53,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D+A
-@SP
-A=M-1
-M=D
+M=D+M
 
 // push argument 1
 @ARG
@@ -82,13 +69,18 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=A-D
-@SP
-A=M-1
-M=D
+M=M-D
 
 // return
+@LCL
+D=M
+@R13
+M=D
+@5
+A=D-A
+D=M
+@R14
+M=D
 @SP
 A=M-1
 D=M
@@ -98,10 +90,6 @@ M=D
 @ARG
 D=M+1
 @SP
-M=D
-@LCL
-D=M
-@R13
 M=D
 @R13
 AM=M-1
@@ -123,7 +111,6 @@ AM=M-1
 D=M
 @LCL
 M=D
-@R13
-A=M-1
+@R14
 A=M
 0;JMP

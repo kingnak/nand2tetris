@@ -15,8 +15,8 @@ D=M
 A=M
 M=D
 
-// label LOOP_START
-(LOOP_START)
+// label $LOOP_START
+($LOOP_START)
 
 // push argument 0
 @ARG
@@ -41,11 +41,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D+A
-@SP
-A=M-1
-M=D
+M=D+M
 
 // pop local 0
 @SP
@@ -77,11 +73,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=A-D
-@SP
-A=M-1
-M=D
+M=M-D
 
 // pop argument 0
 @SP
@@ -100,11 +92,11 @@ M=M+1
 A=M-1
 M=D
 
-// if-goto LOOP_START
+// if-goto $LOOP_START
 @SP
 AM=M-1
 D=M
-@LOOP_START
+@$LOOP_START
 D;JNE
 
 // push local 0

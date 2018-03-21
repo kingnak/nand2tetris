@@ -69,11 +69,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=A-D
-@SP
-A=M-1
-M=D
+M=M-D
 
 // pop argument 0
 @SP
@@ -83,8 +79,8 @@ D=M
 A=M
 M=D
 
-// label MAIN_LOOP_START
-(MAIN_LOOP_START)
+// label $MAIN_LOOP_START
+($MAIN_LOOP_START)
 
 // push argument 0
 @ARG
@@ -95,19 +91,19 @@ M=M+1
 A=M-1
 M=D
 
-// if-goto COMPUTE_ELEMENT
+// if-goto $COMPUTE_ELEMENT
 @SP
 AM=M-1
 D=M
-@COMPUTE_ELEMENT
+@$COMPUTE_ELEMENT
 D;JNE
 
-// goto END_PROGRAM
-@END_PROGRAM
+// goto $END_PROGRAM
+@$END_PROGRAM
 0;JMP
 
-// label COMPUTE_ELEMENT
-(COMPUTE_ELEMENT)
+// label $COMPUTE_ELEMENT
+($COMPUTE_ELEMENT)
 
 // push that 0
 @THAT
@@ -132,11 +128,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D+A
-@SP
-A=M-1
-M=D
+M=D+M
 
 // pop that 2
 @THAT
@@ -173,11 +165,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D+A
-@SP
-A=M-1
-M=D
+M=D+M
 
 // pop pointer 1
 @SP
@@ -208,11 +196,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=A-D
-@SP
-A=M-1
-M=D
+M=M-D
 
 // pop argument 0
 @SP
@@ -222,9 +206,9 @@ D=M
 A=M
 M=D
 
-// goto MAIN_LOOP_START
-@MAIN_LOOP_START
+// goto $MAIN_LOOP_START
+@$MAIN_LOOP_START
 0;JMP
 
-// label END_PROGRAM
-(END_PROGRAM)
+// label $END_PROGRAM
+($END_PROGRAM)

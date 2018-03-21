@@ -1,25 +1,11 @@
 // Bootstrap
-@Sys.halt
-D=A
-@256
-M=D
-D=A
-@ARG
-M=D
 @261
 D=A
 @SP
 M=D
 @LCL
 M=D
-@THIS
-M=0
-@THAT
-M=0
 @Sys.init
-0;JMP
-(Sys.halt)
-@Sys.halt
 0;JMP
 
 // function Main.fibonacci 0
@@ -47,8 +33,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D-A
+D=D-M
 @_cond_t_Main.0
 D;JLE
 D=-1
@@ -153,11 +138,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=A-D
-@SP
-A=M-1
-M=D
+M=M-D
 
 // call Main.fibonacci 1
 @Main.fibonacci_return_0
@@ -226,11 +207,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=A-D
-@SP
-A=M-1
-M=D
+M=M-D
 
 // call Main.fibonacci 1
 @Main.fibonacci_return_1
@@ -282,11 +259,7 @@ M=D
 AM=M-1
 D=M
 A=A-1
-A=M
-D=D+A
-@SP
-A=M-1
-M=D
+M=D+M
 
 // return
 @LCL
