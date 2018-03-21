@@ -8,6 +8,7 @@ using namespace std;
 
 Translator::Translator(ostream &out)
 	:  m_cw(new CodeWriter(out))
+	, m_bare(false)
 	, m_curFuncLocalsDef(0)
 	, m_curFuncLocals(0)
 	, m_curFuncArgs(0)
@@ -24,6 +25,7 @@ Translator::~Translator()
 
 bool Translator::minimalBootstrap()
 {
+	if (m_bare) return true;
 	if (m_bootStrapType != NoBootstrap) return m_errs.addError(ErrorContainer::Fail, "Bootstrapping code already written", 0);
 	m_bootStrapType = MiniBootstrap;
 	addCall("Sys.init", CallSite{ "{Bootstrap}",0 }, 0);
@@ -34,6 +36,7 @@ bool Translator::minimalBootstrap()
 
 bool Translator::bootstrap()
 {
+	if (m_bare) return true;
 	if (m_bootStrapType != NoBootstrap) return m_errs.addError(ErrorContainer::Fail, "Bootstrapping code already written", 0);
 	m_bootStrapType = FullBootstrap;
 	addCall("Sys.init", CallSite{ "{Bootstrap}", 0 }, 0);
@@ -81,7 +84,14 @@ bool Translator::translate(istream &in, const string &fn)
 		bool ok = false;
 		p.advance();
 
-		if (m_curFunc.empty() && p.commandType() != Trans::CommandType::Function) {
+		if (m_bare) {
+			switch (p.commandType()) {
+			case Trans::CommandType::Function:
+			case Trans::CommandType::Call:
+			case Trans::CommandType::Return:
+				return setFail("No function/call/return allowed in bare output", p.line());
+			}
+		} else if (m_curFunc.empty() && p.commandType() != Trans::CommandType::Function) {
 			return setFail("Code before function in " + fn, p.line());
 		}
 
@@ -205,6 +215,11 @@ bool Translator::verifyCalls()
 void Translator::setDebug(bool dbg)
 {
 	m_cw->setDebug(dbg);
+}
+
+void Translator::setBare(bool bare)
+{
+	m_bare = bare;
 }
 
 bool Translator::checkEndFunction(int16_t line)

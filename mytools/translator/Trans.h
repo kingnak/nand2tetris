@@ -20,6 +20,7 @@ public:
 	bool translate(std::istream &in, const std::string &fn);
 	const ErrorContainer &errors() const { return m_errs; }
 	void setDebug(bool dbg);
+	void setBare(bool bare);
 
 	bool verifyCalls();
 
@@ -58,6 +59,7 @@ private:
 
 	CodeWriter *m_cw;
 
+	bool m_bare;
 	std::string m_fn;
 	FunctionArgMap m_funcs;
 	CallMap m_calls;

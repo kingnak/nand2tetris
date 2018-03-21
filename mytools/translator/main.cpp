@@ -11,7 +11,8 @@ using namespace  std;
 int main(int argc, char **argv)
 {
 	enum {
-		MinBootstrap = CmdLineHelper::CustomArgBase
+		MinBootstrap = CmdLineHelper::CustomArgBase,
+		BareOutput = CmdLineHelper::CustomArgBase<<1
 	};
 
 
@@ -19,6 +20,7 @@ int main(int argc, char **argv)
 	c.allowEmptyIn();
 	c.addDefaultArgs(CmdLineHelper::Help | CmdLineHelper::Debug);
 	c.addCustomArg("-mb", "--min-bootstrap", MinBootstrap);
+	c.addCustomArg("", "--bare", BareOutput);
 	if (!c.handleCmdLine(argc, argv) || c.isHelp()) {
 		cerr << c.usage() << endl;
 		return 1;
@@ -50,6 +52,7 @@ int main(int argc, char **argv)
 
 	Translator t(out);
 	t.setDebug(c.isDebug());
+	t.setBare(c.isFlagSet(BareOutput));
 
 	if (c.isFlagSet(MinBootstrap)) {
 		t.minimalBootstrap();
