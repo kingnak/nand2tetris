@@ -10,12 +10,12 @@ static string stringify(int16_t v) {
 }
 
 const CodeWriter::ArithCodes CodeWriter::s_arith = {
-	{ "add", make_pair(true, "D=D+A") },
-	{ "sub", make_pair(true, "D=A-D") },
-	{ "neg", make_pair(false, "D=-D") },
-	{ "and", make_pair(true, "D=D&A") },
-	{ "or", make_pair(true, "D=D|A") },
-	{ "not", make_pair(false, "D=!D") }
+	{ "add", make_pair(true, "M=D+M") },
+	{ "sub", make_pair(true, "M=M-D") },
+	{ "neg", make_pair(false, "M=-M") },
+	{ "and", make_pair(true, "M=D&M") },
+	{ "or", make_pair(true, "M=D|M") },
+	{ "not", make_pair(false, "M=!M") }
 };
 
 const CodeWriter::CompCodes CodeWriter::s_comp = {
@@ -395,20 +395,18 @@ void CodeWriter::writeBinary(const string &op)
 {
 	writeBinaryHeader();
 	m_out << op << "\n";
-	writeNaryFooter();
 }
 
 void CodeWriter::writeUnary(const string &op)
 {
 	writeUnaryHeader();
 	m_out << op << "\n";
-	writeNaryFooter();
 }
 
 void CodeWriter::writeCompare(const std::string &cmp)
 {
 	writeBinaryHeader();
-	m_out << "D=D-A\n";
+	m_out << "D=D-M\n";
 	writeConditional("D", cmp, "D=0", "D=-1");
 	writeNaryFooter();
 }
@@ -416,7 +414,7 @@ void CodeWriter::writeCompare(const std::string &cmp)
 void CodeWriter::writeCompareSimple(const string &cmp)
 {
 	writeBinaryHeader();
-	m_out << "D=D-A\n";
+	m_out << "D=D-M\n";
 	writeOptionalFallthrough("D", cmp, "D=-1");
 	m_out << "D=!D\n";
 	writeNaryFooter();
@@ -424,16 +422,19 @@ void CodeWriter::writeCompareSimple(const string &cmp)
 
 void CodeWriter::writeUnaryHeader()
 {
-	writeLoadSPInto('D');
+	m_out <<
+		"@SP\n"
+		"A=M-1\n"
+		;
 }
 
 void CodeWriter::writeBinaryHeader()
 {
-	// Optimized pop into D + load Tos into A
+	// Optimized pop into D + Point M to tos
 	writePopInto('D');
 	m_out <<
 		"A=A-1\n"
-		"A=M\n";
+		;
 }
 
 void CodeWriter::writeNaryFooter()
