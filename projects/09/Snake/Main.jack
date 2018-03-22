@@ -1,0 +1,9 @@
+class Main {
+	function void main() {
+		var Map m;
+		let m = Map.new();
+		do m.draw();
+		do m.dispose();
+		return;
+	}
+}

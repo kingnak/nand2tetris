@@ -1,0 +1,60 @@
+class Field {
+	field int state;
+	field int x, y;
+	
+	function int WallType() {
+		return -1;
+	}
+	function int FoodType() {
+		return -2;
+	}
+	function int FreeType() {
+		return 0;
+	}
+	
+	constructor Field new(int ax, int ay, int astate) {
+		let x = ax;
+		let y = ay;
+		let state = astate;
+		return this;
+	}
+	
+	method int getX() {
+		return x;
+	}
+	
+	method int getY() {
+		return y;
+	}
+	
+	method boolean isFree() {
+		return state = 0;
+	}
+	
+	method boolean isWall() {
+		return state = Field.WallType();
+	}
+	
+	method boolean hasFood() {
+		return state = Field.FoodType();
+	}
+	
+	method booelan hasSnake() {
+		return state > 0;
+	}
+	
+	method int ttl() {
+		if (state > 0) { return state; }
+		return 0;
+	}
+	
+	method void move() {
+		if (state > 0) { let state = state - 1; }
+		return;
+	}
+	
+	method void dispose() {
+		do Memory.deAlloc(this);
+		return;
+	}
+}

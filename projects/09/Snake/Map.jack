@@ -1,0 +1,104 @@
+class Map {
+	field Array fields;
+	
+	static int MinX;
+	static int MinY;
+	static int MaxX; // = 512 / 8
+	static int MaxY; // = 256 / 8
+//	static int ResX;
+//	static int ResY;
+	static int FieldCount; // 2048
+	static int BlockSize;
+	
+	function void staticInit() {
+		let MinX = 0;
+		let MinY = 0;
+		let MaxX = 64;
+		let MaxY = 32;
+//		let ResX = 512;
+//		let ResY = 256;
+		let FieldCount = 2048;
+		let BlockSize = 8;
+		return;
+	}
+	
+	constructor Map new() {
+		var int x,y,ct,s;
+		do Map.staticInit();
+		let fields = Array.new(FieldCount);
+		let x = 0;
+		let ct = 0;
+		while (x < MaxX) {
+			let y = 0;
+			while (y < MaxY) {
+				if ((x = 0) | (x = MaxX-1) | (y = 0) | (y = MaxY-1)) {
+					let s = Field.WallType();
+				} else {
+					let s = Field.FreeType();
+				}
+					
+				let fields[ct] = Field.new(x, y, s);
+				let ct = ct+1;
+				let y = y+1;
+			}
+			let x = x+1;
+		}
+		return this;
+	}
+	
+	method void dispose() {
+		var int ct;
+		var Field f;
+		let ct = 0;
+		while (ct < FieldCount) {
+			let f = fields[ct];
+			do f.dispose();
+			let ct = ct+1;
+		}
+		do Memory.deAlloc(this);
+		return;
+	}
+	
+	method void update() {
+		var int x,y,ct;
+		var Field f;
+		let x = 0;
+		let ct = 0;
+		while (x < MaxX) {
+			let y = 0;
+			while (y < MaxY) {
+				let f = fields[ct];
+				do f.move();
+				let ct = ct+1;
+			}
+		}
+		return;
+	}
+	
+	method void draw() {
+		var int ct,x,y,rx,ry;
+		var Field f;
+		do Screen.setColor(false);
+		do Screen.clearScreen();
+		do Screen.setColor(true);
+		let ct = 0;
+		let x = 0;
+		let rx = 0;
+		while (x < MaxX) {
+			let y = 0;
+			let ry = 0;
+			while (y < MaxY) {
+				let f = fields[ct];
+				if (f.isWall()) {
+					do Screen.drawRectangle(rx, ry, rx+BlockSize-1, ry+BlockSize-1);
+				}
+				let y = y + 1;
+				let ry = ry + BlockSize;
+				let ct = ct + 1;
+			}
+			let x = x + 1;
+			let rx = rx + BlockSize;
+		}
+		return;
+	}
+}
