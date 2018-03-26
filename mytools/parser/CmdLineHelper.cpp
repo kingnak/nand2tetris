@@ -32,7 +32,7 @@ void CmdLineHelper::addCustomArg(const std::string &shortName, const std::string
 	}
 }
 
-bool CmdLineHelper::handleCmdLine(int argc, char **argv)
+bool CmdLineHelper::handleCmdLine(int argc, char **argv, bool hasOut)
 {
 	if (argc < 1) return false;
 
@@ -82,9 +82,11 @@ bool CmdLineHelper::handleCmdLine(int argc, char **argv)
 	if (m_in.back() == '/' || m_in.back() == '\\') m_in.pop_back();
 
 	uint16_t off = 1;
-	if (args.size() > 1) {
-		m_out = args[1];
-		off = 2;
+	if (hasOut) {
+		if (args.size() > 1) {
+			m_out = args[1];
+			off = 2;
+		}
 	}
 	if (args.size() > off) {
 		cerr << "Unsupported flags:";

@@ -12,7 +12,7 @@ public:
 
 	void allowEmptyIn() { m_allowEmptyIn = true; }
 
-	bool handleCmdLine(int argc, char **argv);
+	bool handleCmdLine(int argc, char **argv, bool hasOut = true);
 	std::string usage() const;
 
 	std::string inFile() const;
