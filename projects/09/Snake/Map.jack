@@ -5,8 +5,6 @@ class Map {
 	static int MinY;
 	static int MaxX; // = 512 / 8
 	static int MaxY; // = 256 / 8
-//	static int ResX;
-//	static int ResY;
 	static int FieldCount; // 2048
 	static int BlockSize;
 	
@@ -15,30 +13,23 @@ class Map {
 		let MinY = 0;
 		let MaxX = 64;
 		let MaxY = 32;
-//		let ResX = 512;
-//		let ResY = 256;
 		let FieldCount = 2048;
 		let BlockSize = 8;
 		return;
 	}
 	
 	constructor Map new() {
-		var int x,y,ct,s;
+		var int x,y,s;
+		var Array column;
 		do Map.staticInit();
-		let fields = Array.new(FieldCount);
+		let fields = Array.new(MaxX);
 		let x = 0;
-		let ct = 0;
 		while (x < MaxX) {
+			let fields[x] = Array.new(MaxY);
+			let column = fields[x];
 			let y = 0;
 			while (y < MaxY) {
-				if ((x = 0) | (x = MaxX-1) | (y = 0) | (y = MaxY-1)) {
-					let s = Field.WallType();
-				} else {
-					let s = Field.FreeType();
-				}
-					
-				let fields[ct] = Field.new(x, y, s);
-				let ct = ct+1;
+				let column[y] = Field.new();
 				let y = y+1;
 			}
 			let x = x+1;
@@ -46,55 +37,107 @@ class Map {
 		return this;
 	}
 	
-	method void dispose() {
-		var int ct;
+	method void reset() {
+		var int x,y,s;
+		var Array column;
 		var Field f;
-		let ct = 0;
-		while (ct < FieldCount) {
-			let f = fields[ct];
-			do f.dispose();
-			let ct = ct+1;
+		let x = 0;
+		while (x < MaxX) {
+			let column = fields[x];
+			let y = 0;
+			while (y < MaxY) {
+				if ((x=0) | (y=0) | (x = (MaxX-1)) | (y = (MaxY-1))) {
+					let s = Field.WallType();
+				} else {
+					let s = Field.FreeType();
+				}
+					
+				let f = column[y];
+				do f.setType(s);
+				let y = y+1;
+			}
+			let x = x+1;
+		}
+		return;
+	}
+	
+	method void dispose() {
+		var int x, y;
+		var Array column;
+		var Field f;
+		let x = 0;
+		while (x < MaxX) {
+			let column = fields[x];
+			let y = 0;
+			while (y < MaxY) {
+				let f = column[y];
+				do f.dispose();
+				let y = y+1;
+			}
+			do column.dispose();
+			let x = x+1;
 		}
 		do Memory.deAlloc(this);
 		return;
 	}
 	
 	method void update() {
-		var int x,y,ct;
+		var int x,y;
+		var Array column;
 		var Field f;
 		let x = 0;
-		let ct = 0;
 		while (x < MaxX) {
+			let column = fields[x];
 			let y = 0;
 			while (y < MaxY) {
-				let f = fields[ct];
+				let f = column[y];
 				do f.move();
-				let ct = ct+1;
+				let y = y+1;
 			}
+			let x = x+1;
 		}
 		return;
 	}
 	
-	method void draw() {
-		var int ct,x,y,rx,ry;
+	method void placeFood() {
+		do Food.placeFood(this);
+		return;
+	}
+	
+	method Field getField(int x, int y) {
+		var Array column;
 		var Field f;
-		do Screen.setColor(false);
-		do Screen.clearScreen();
-		do Screen.setColor(true);
-		let ct = 0;
+		let column = fields[x];
+		let f = column[y];
+		return f;
+	}
+	
+	method void draw() {
+		do doDraw(false);
+		return;
+	}
+	
+	method void drawGameOver() {
+		do doDraw(true);
+		return;
+	}
+	
+	method void doDraw(boolean go) {
+		var int x,y,rx,ry;
+		var Array column;
+		var Field f;
+
 		let x = 0;
 		let rx = 0;
 		while (x < MaxX) {
+			let column = fields[x];
 			let y = 0;
 			let ry = 0;
 			while (y < MaxY) {
-				let f = fields[ct];
-				if (f.isWall()) {
-					do Screen.drawRectangle(rx, ry, rx+BlockSize-1, ry+BlockSize-1);
-				}
+				let f = column[y];
+				do f.draw(rx, ry, BlockSize, go);
 				let y = y + 1;
 				let ry = ry + BlockSize;
-				let ct = ct + 1;
 			}
 			let x = x + 1;
 			let rx = rx + BlockSize;

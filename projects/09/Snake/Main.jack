@@ -1,9 +1,37 @@
 class Main {
 	function void main() {
 		var Map m;
+		var Snake s;
+		var int key;
+		var boolean gameOver;
+		
 		let m = Map.new();
-		do m.draw();
+		
+		while (true) {
+			do Screen.clearScreen();
+			do m.reset();
+			let s = Snake.new(31,16,3);
+			do m.placeFood();
+			
+			while (~gameOver) {
+				do s.updateDirection();
+				do s.move();
+				let gameOver = ~s.update(m);
+				do m.update();
+				do m.draw();
+				do Sys.wait(50);
+			}
+			
+			do m.drawGameOver();
+			
+			while (Keyboard.keyPressed() = 0) { do Sys.wait(100); }
+			
+			let gameOver = false;
+			do s.dispose();
+		}
+		
 		do m.dispose();
+		do s.dispose();
 		return;
 	}
 }

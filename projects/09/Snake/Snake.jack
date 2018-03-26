@@ -1,2 +1,57 @@
 class Snake {
+	field int headX, headY, len, dir;
+	
+	constructor Snake new(int hX, int hY, int l) {
+		let headX = hX;
+		let headY = hY;
+		let len = l;
+		let dir = 0;
+		return this;
+	}
+	
+	method void updateDirection() {
+		var int key;
+		let key = Keyboard.keyPressed();
+		if ((key = 130) & (~(dir = 2))) { let dir = 3; } // Left
+		if ((key = 131) & (~(dir = 1))) { let dir = 4; } // Up
+		if ((key = 132) & (~(dir = 3))) { let dir = 2; } // Right
+		if ((key = 133) & (~(dir = 4))) { let dir = 1; } // Down
+		return;
+	}
+	
+	method void move() {
+		if (dir = 1) { let headY = headY+1; }
+		if (dir = 2) { let headX = headX+1; }
+		if (dir = 3) { let headX = headX-1; }
+		if (dir = 4) { let headY = headY-1; }
+		return;
+	}
+
+	method void grow() {
+		let len = len+1;
+		return;
+	}
+	
+	method boolean update(Map m) {
+		var Field f;
+		if (dir = 0) {
+			return true;
+		}
+		let f = m.getField(headX, headY);
+		if (f.hasFood()) {
+			do grow();
+			do m.placeFood();
+		} else {
+			if (~(f.isFree())) {
+				return false;
+			}
+		}
+		do f.placeSnake(len+1);
+		return true;
+	}
+	
+	method void dispose() {
+		do Memory.deAlloc(this);
+		return;
+	}
 }

@@ -1,6 +1,6 @@
 class Field {
 	field int state;
-	field int x, y;
+	field boolean dirty;
 	
 	function int WallType() {
 		return -1;
@@ -12,19 +12,16 @@ class Field {
 		return 0;
 	}
 	
-	constructor Field new(int ax, int ay, int astate) {
-		let x = ax;
-		let y = ay;
-		let state = astate;
+	constructor Field new() {
+		let dirty = true;
+		let state = Field.FreeType();
 		return this;
 	}
 	
-	method int getX() {
-		return x;
-	}
-	
-	method int getY() {
-		return y;
+	method void setType(int s) {
+		let state = s;
+		let dirty = true;
+		return;
 	}
 	
 	method boolean isFree() {
@@ -32,15 +29,33 @@ class Field {
 	}
 	
 	method boolean isWall() {
-		return state = Field.WallType();
+		if (state = Field.WallType()) {
+			return true;
+		}
+		return false;
 	}
 	
 	method boolean hasFood() {
 		return state = Field.FoodType();
 	}
 	
+	method boolean placeFood() {
+		if (isFree()) {
+			let state = Field.FoodType();
+			let dirty = true;
+			return true;
+		}
+		return false;
+	}
+	
 	method booelan hasSnake() {
 		return state > 0;
+	}
+	
+	method void placeSnake(int len) {
+		let state = len;
+		let dirty = true;
+		return;
 	}
 	
 	method int ttl() {
@@ -49,7 +64,37 @@ class Field {
 	}
 	
 	method void move() {
-		if (state > 0) { let state = state - 1; }
+		if (state > 0) { 
+			let state = state - 1; 
+			if (state = 0) {
+				let dirty = true;
+			}
+		}
+		return;
+	}
+	
+	method void draw(int rx, int ry, int BlockSize, boolean gameOver) {
+		if (gameOver) { let dirty = true; }
+		if (~dirty) { return; }
+		
+		if (isWall()) {
+			do Screen.setColor(~gameOver);
+			do Screen.drawRectangle(rx, ry, rx+BlockSize-1, ry+BlockSize-1);
+		}
+		if (hasFood()) {
+			do Screen.setColor(~gameOver);
+			do Screen.drawCircle(rx+(BlockSize/2), ry+(BlockSize/2), (BlockSize/2)-1);
+		}
+		if (hasSnake()) {
+			do Screen.setColor(~gameOver);
+			do Screen.drawRectangle(rx, ry, rx+BlockSize-1, ry+BlockSize-1);
+		}
+		if (isFree()) {
+			do Screen.setColor(gameOver);
+			do Screen.drawRectangle(rx, ry, rx+BlockSize-1, ry+BlockSize-1);
+		}
+		let dirty = false;
+		if (gameOver) { let dirty = true; }
 		return;
 	}
 	

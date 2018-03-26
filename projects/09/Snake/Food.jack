@@ -1,2 +1,81 @@
 class Food {
+	static boolean isInit;
+	static Array foods;
+	static int cur;
+	
+	field int x,y;
+	
+	function void placeFood(Map m) {
+		var Food f;
+		var boolean ok;
+		var Field fld;
+		if (~isInit) {
+			do Food.initFood();
+		}
+		let ok = false;
+		while (~ok) {
+			let cur = cur+1;
+			if (cur > 29) {
+				let cur = 0;
+			}
+			let f = foods[cur];
+			let fld = m.getField(f.getX(), f.getY());
+			let ok = fld.placeFood();
+		}
+		return;
+	}
+	
+	function void initFood() {
+		var int c;
+		let foods = Array.new(30);
+		let c = 0;
+		while (c < 30) {
+			let foods[c] = Food.new(c);
+			let c = c + 1;
+		}
+		let isInit = true;
+		return;
+	}
+	
+	method int getX() {
+		return x;
+	}
+	
+	method int getY() {
+		return y;
+	}
+	
+	constructor Food new(int c) {
+		if (c = 0) { let x = 43; let y = 22; }
+		if (c = 1) { let x = 3; let y = 6; }
+		if (c = 2) { let x = 52; let y = 26; }
+		if (c = 3) { let x = 23; let y = 17; }
+		if (c = 4) { let x = 11; let y = 21; }
+		if (c = 5) { let x = 9; let y = 13; }
+		if (c = 6) { let x = 2; let y = 26; }
+		if (c = 7) { let x = 47; let y = 21; }
+		if (c = 8) { let x = 27; let y = 14; }
+		if (c = 9) { let x = 45; let y = 12; }
+		if (c = 10) { let x = 41; let y = 30; }
+		if (c = 11) { let x = 62; let y = 20; }
+		if (c = 12) { let x = 63; let y = 25; }
+		if (c = 13) { let x = 5; let y = 19; }
+		if (c = 14) { let x = 40; let y = 24; }
+		if (c = 15) { let x = 53; let y = 20; }
+		if (c = 16) { let x = 54; let y = 7; }
+		if (c = 17) { let x = 5; let y = 32; }
+		if (c = 18) { let x = 36; let y = 29; }
+		if (c = 19) { let x = 55; let y = 16; }
+		if (c = 20) { let x = 57; let y = 21; }
+		if (c = 21) { let x = 39; let y = 16; }
+		if (c = 22) { let x = 15; let y = 21; }
+		if (c = 23) { let x = 55; let y = 10; }
+		if (c = 24) { let x = 25; let y = 25; }
+		if (c = 25) { let x = 1; let y = 17; }
+		if (c = 26) { let x = 2; let y = 9; }
+		if (c = 27) { let x = 26; let y = 28; }
+		if (c = 28) { let x = 30; let y = 20; }
+		if (c = 29) { let x = 44; let y = 11; }
+		return this;
+	}
 }
