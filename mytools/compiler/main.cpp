@@ -1,20 +1,22 @@
 #include <CmdLineHelper.h>
 #include <iostream>
 #include <fstream>
-#include "Compiler.h"
-#include "AnalyzerEngine.h"
+#include "CompilerEngine.h"
+#include "AnalyzerGenerator.h"
 
 using namespace std;
 
 int main(int argc, char **argv)
 {
 	enum {
-		AnalyzeOnly = CmdLineHelper::CustomArgBase
+		TokenizeOnly = CmdLineHelper::CustomArgBase,
+		AnalyzeOnly = CmdLineHelper::CustomArgBase<<1
 	};
 
 	CmdLineHelper c;
 	c.allowEmptyIn();
 	c.addDefaultArgs(CmdLineHelper::Help | CmdLineHelper::Debug);
+	c.addCustomArg("-t", "--tokenize", TokenizeOnly);
 	c.addCustomArg("-a", "--analyze", AnalyzeOnly);
 	
 	if (!c.handleCmdLine(argc, argv, false) || c.isHelp()) {
@@ -22,12 +24,13 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	AbstractCompilerEngineFactory *factory = nullptr;
+	bool tokenize = c.isFlagSet(TokenizeOnly);
+	CodeGeneratorFactory *factory = nullptr;
 	if (c.isFlagSet(AnalyzeOnly)) {
-		factory = new AnalyzerEngineFactory;
+		factory = new AnalyzerGeneratorFactory;
 	}
 
-	if (!factory) {
+	if (!factory && !tokenize) {
 		cerr << "No generator selected" << endl;
 		cerr << c.usage() << endl;
 		return 1;
@@ -48,7 +51,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	Compiler cmp(factory);
+	CompilerEngine cmp(factory);
 	for (auto fi : files) {
 		ifstream in;
 		in.open(fi);
@@ -58,14 +61,21 @@ int main(int argc, char **argv)
 		}
 
 		ofstream out;
-		string oName = factory->generateOutName(CmdLineHelper::pathName(fi) + "/" + CmdLineHelper::baseName(fi));
+		string oName;
+		if (tokenize)
+			oName = CmdLineHelper::pathName(fi) + "/" + CmdLineHelper::baseName(fi) + "T.xml";
+		else
+			oName = factory->getOutFileName(CmdLineHelper::pathName(fi) + "/" + CmdLineHelper::baseName(fi));
 		out.open(oName);
 		if (!out.is_open()) {
 			cerr << "Cannot open output file: " << oName << endl;
 			return 1;
 		}
 
-		cmp.compile(in, out);
+		if (tokenize)
+			cmp.tokenize(in, out);
+		else
+			cmp.compile(in, out);
 	}
 
 	return 0;

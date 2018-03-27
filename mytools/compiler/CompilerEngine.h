@@ -2,30 +2,36 @@
 
 #include <ostream>
 
+class CodeGeneratorFactory;
+class CodeGenerator;
+class Tokenizer;
+
 class CompilerEngine
 {
 public:
-	virtual bool compileClass() = 0;
-	virtual bool compileClassVarDec() = 0;
-	virtual bool compileSubroutine() = 0;
-	virtual bool compileParameterList() = 0;
-	virtual bool compileVarDec() = 0;
-	virtual bool compileStatements() = 0;
-	virtual bool compileDo() = 0;
-	virtual bool compileLet() = 0;
-	virtual bool compileWhile() = 0;
-	virtual bool compileIf() = 0;
-	virtual bool compileExpression() = 0;
-	virtual bool compileTerm() = 0;
-	virtual bool compileExpressionList() = 0;
+	CompilerEngine(CodeGeneratorFactory *factory);
+	~CompilerEngine();
 
-	virtual ~CompilerEngine() {}
-};
+	bool compile(std::istream &in, std::ostream &out) { return false; }
+	bool tokenize(std::istream &in, std::ostream &out);
 
-class AbstractCompilerEngineFactory
-{
-public:
-	virtual ~AbstractCompilerEngineFactory() {}
-	virtual CompilerEngine *createEngine(std::ostream &out) = 0;
-	virtual std::string generateOutName(const std::string &inBase) const = 0;
+private:
+	bool compileClass();
+	bool compileClassVarDec();
+	bool compileSubroutine();
+	bool compileParameterList();
+	bool compileVarDec();
+	bool compileStatements();
+	bool compileDo();
+	bool compileLet();
+	bool compileWhile();
+	bool compileIf();
+	bool compileExpression();
+	bool compileTerm();
+	bool compileExpressionList();
+
+private:
+	CodeGeneratorFactory *m_fac;
+	CodeGenerator *m_gen;
+	Tokenizer *m_tok;
 };

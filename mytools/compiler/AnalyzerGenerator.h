@@ -1,13 +1,14 @@
 #pragma once
 
 #include <ostream>
-#include "CompilerEngine.h"
+#include "CodeGenerator.h"
 
-class AnalyzerEngine : public CompilerEngine
+class AnalyzerGenerator : public CodeGenerator
 {
 public:
-	AnalyzerEngine(std::ostream &o) : m_out(o) {}
+	AnalyzerGenerator(std::ostream &o) : m_out(o) {}
 
+	/*
 	virtual bool compileClass() override { return false; }
 	virtual bool compileClassVarDec() override { return false; }
 	virtual bool compileSubroutine() override { return false; }
@@ -21,21 +22,21 @@ public:
 	virtual bool compileExpression() override { return false; }
 	virtual bool compileTerm() override { return false; }
 	virtual bool compileExpressionList() override { return false; }
-
-	virtual ~AnalyzerEngine() {}
+	*/
+	virtual ~AnalyzerGenerator() {}
 
 private:
 	std::ostream &m_out;
 };
 
-class AnalyzerEngineFactory : public AbstractCompilerEngineFactory
+class AnalyzerGeneratorFactory : public CodeGeneratorFactory
 {
 public:
-	virtual AnalyzerEngine *createEngine(std::ostream &out) override {
-		return new AnalyzerEngine(out);
+	virtual AnalyzerGenerator *create(std::ostream &out) override {
+		return new AnalyzerGenerator(out);
 	}
-	virtual std::string generateOutName(const std::string &inBase) const override {
-		return inBase + ".xml";
+	virtual std::string getOutFileName(std::string baseFileName) const override {
+		return baseFileName + ".xml";
 	}
 };
 

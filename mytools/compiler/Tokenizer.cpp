@@ -95,7 +95,7 @@ void Tokenizer::advance()
 				skipBlockComment();
 				break;
 			} else {
-				m_sym = c;
+				m_sym = '/';
 				m_token = TokenType::Symbol;
 				pushBackChar(c);
 				return;
@@ -187,6 +187,7 @@ void Tokenizer::skipBlockComment()
 
 void Tokenizer::parseString()
 {
+	m_token = TokenType::StringConst;
 	m_str.clear();
 	char c = readChar();
 	while (c != '"' && c != '\0' && c != '\n') {
@@ -200,6 +201,7 @@ void Tokenizer::parseString()
 
 void Tokenizer::parseNumber()
 {
+	m_token = TokenType::IntConst;
 	m_str.clear();
 	char c = readChar();
 	while (isdigit(c)) {
