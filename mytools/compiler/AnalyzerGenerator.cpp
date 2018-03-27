@@ -26,6 +26,7 @@ bool AnalyzerGenerator::startClass(const std::string &name)
 
 bool AnalyzerGenerator::endClass()
 {
+	printSymbol('}');
 	m_ident--;
 	print("</class>");
 	return true;
@@ -83,6 +84,31 @@ bool AnalyzerGenerator::declareParameters(const std::vector<Parameter> &params)
 	m_ident--;
 	print("</parameterList>");
 	printSymbol(')');
+	return true;
+}
+
+bool AnalyzerGenerator::startSubroutineBody()
+{
+	print("<subroutineBody>");
+	m_ident++;
+	printSymbol('{');
+	return true;
+}
+
+bool AnalyzerGenerator::declareVariable(DataType type, const std::string &classType, const std::vector<std::string> &names)
+{
+	print("<varDec>");
+	m_ident++;
+	doPrintVar("var", type, classType, names);
+	m_ident--;
+	print("</varDec>");
+	return true;
+}
+
+bool AnalyzerGenerator::startStatements()
+{
+	print("<statements>");
+	m_ident++;
 	return true;
 }
 
@@ -152,6 +178,11 @@ void AnalyzerGenerator::doPrintSubroutineStart(const std::string &prefix, DataTy
 
 void AnalyzerGenerator::doPrintSubroutineEnd()
 {
+	m_ident--;
+	print("</statements>");
+	printSymbol('}');
+	m_ident--;
+	print("</subroutineBody>");
 	m_ident--;
 	print("</subroutineDec>");
 }

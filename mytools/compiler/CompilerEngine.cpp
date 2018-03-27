@@ -205,6 +205,16 @@ bool CompilerEngine::compileSubroutine()
 	if (!compileParameterList())
 		return false;
 	
+	if (!expect('{'))
+		return false;
+
+	m_gen->startSubroutineBody();
+	while (compileVarDec())
+		;
+
+	if (!compileStatements())
+		return false;
+
 	if (isCtr)
 		m_gen->endConstructor();
 	else if (isFunc)
@@ -253,10 +263,45 @@ bool CompilerEngine::compileParameterList()
 
 	return true;
 }
+
+bool CompilerEngine::compileVarDec()
+{
+	if (!accept(Tokenizer::Keyword::Var))
+		return false;
+
+	VarDef def;
+	if (!parseVarDef(def)) {
+		return false;
+	}
+
+	m_gen->declareVariable(def.type, def.className, def.vars);
+	return true;
+}
+
+
+bool CompilerEngine::compileStatements()
+{
+	m_gen->startStatements();
+	do {
+		if (accept(Tokenizer::Keyword::Let)) {
+			if (!compileLet()) return false;
+		} else if (accept(Tokenizer::Keyword::Do)) {
+		} else if (accept(Tokenizer::Keyword::While)) {
+		} else if (accept(Tokenizer::Keyword::If)) {
+		} else if (accept(Tokenizer::Keyword::Return)) {
+		} else {
+			return false;
+		}
+	} while (true);
+}
+
+
+bool CompilerEngine::compileDo()
+{
+
+}
+
 /*
-bool CompilerEngine::compileVarDec();
-bool CompilerEngine::compileStatements();
-bool CompilerEngine::compileDo();
 bool CompilerEngine::compileLet();
 bool CompilerEngine::compileWhile();
 bool CompilerEngine::compileIf();

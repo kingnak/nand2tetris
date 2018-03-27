@@ -27,6 +27,9 @@ public:
 	virtual bool startMethod(DataType retType, const std::string &retName, const std::string &funcName) = 0;
 	virtual bool startFunction(DataType retType, const std::string &retName, const std::string &funcName) = 0;
 	virtual bool declareParameters(const std::vector<Parameter> &params) = 0;
+	virtual bool startSubroutineBody() = 0;
+	virtual bool declareVariable(DataType type, const std::string &classType, const std::vector<std::string> &names) = 0;
+	virtual bool startStatements() = 0;
 	virtual bool endConstructor() = 0;
 	virtual bool endMethod() = 0;
 	virtual bool endFunction() = 0;

@@ -17,6 +17,9 @@ public:
 	bool startMethod(DataType retType, const std::string &retName, const std::string &funcName) override;
 	bool startFunction(DataType retType, const std::string &retName, const std::string &funcName) override;
 	bool declareParameters(const std::vector<Parameter> &params) override;
+	bool startSubroutineBody() override;
+	bool declareVariable(DataType type, const std::string &classType, const std::vector<std::string> &names) override;
+	bool startStatements() override;
 	bool endConstructor() override;
 	bool endMethod() override;
 	bool endFunction() override;
