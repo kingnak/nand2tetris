@@ -6,36 +6,43 @@
 class AnalyzerGenerator : public CodeGenerator
 {
 public:
-	AnalyzerGenerator(std::ostream &o) : m_out(o) {}
+	AnalyzerGenerator(std::ostream &o) : m_out(o), m_ident(0) {}
+	~AnalyzerGenerator() {}
 
-	/*
-	virtual bool compileClass() override { return false; }
-	virtual bool compileClassVarDec() override { return false; }
-	virtual bool compileSubroutine() override { return false; }
-	virtual bool compileParameterList() override { return false; }
-	virtual bool compileVarDec() override { return false; }
-	virtual bool compileStatements() override { return false; }
-	virtual bool compileDo() override { return false; }
-	virtual bool compileLet() override { return false; }
-	virtual bool compileWhile() override { return false; }
-	virtual bool compileIf() override { return false; }
-	virtual bool compileExpression() override { return false; }
-	virtual bool compileTerm() override { return false; }
-	virtual bool compileExpressionList() override { return false; }
-	*/
-	virtual ~AnalyzerGenerator() {}
+	bool startClass(const std::string &name) override;
+	bool endClass() override;
+	bool declareStaticVariables(DataType type, const std::string &classType, const std::vector<std::string> &names) override;
+	bool declareFieldVariables(DataType type, const std::string &classType, const std::vector<std::string> &names) override;
+	bool startConstructor(const std::string &className, const std::string &funcName) override;
+	bool startMethod(DataType retType, const std::string &retName, const std::string &funcName) override;
+	bool startFunction(DataType retType, const std::string &retName, const std::string &funcName) override;
+	bool declareParameters(const std::vector<Parameter> &params) override;
+	bool endConstructor() override;
+	bool endMethod() override;
+	bool endFunction() override;
+
+private:
+	void printIdent(const std::string &ident);
+	void printSymbol(char sym);
+	void printKeyword(const std::string &keyword);
+	void doPrintType(DataType type, const std::string &classType);
+	void doPrintVar(const std::string &prefix, DataType type, const std::string &classType, const std::vector<std::string> &names);
+	void doPrintSubroutineStart(const std::string &prefix, DataType retType, const std::string &retName, const std::string &funcName);
+	void doPrintSubroutineEnd();
+	void print(const std::string &str);
 
 private:
 	std::ostream &m_out;
+	int m_ident;
 };
 
 class AnalyzerGeneratorFactory : public CodeGeneratorFactory
 {
 public:
-	virtual AnalyzerGenerator *create(std::ostream &out) override {
+	AnalyzerGenerator *create(std::ostream &out) override {
 		return new AnalyzerGenerator(out);
 	}
-	virtual std::string getOutFileName(std::string baseFileName) const override {
+	std::string getOutFileName(std::string baseFileName) const override {
 		return baseFileName + ".xml";
 	}
 };

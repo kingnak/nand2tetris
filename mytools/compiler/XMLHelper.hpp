@@ -2,7 +2,7 @@
 
 #include <string>
 
-std::string xmlClean(char c)
+inline std::string xmlClean(char c)
 {
 	switch (c) {
 	case '<': return "&lt;";
@@ -12,7 +12,7 @@ std::string xmlClean(char c)
 	}
 }
 
-std::string xmlClean(std::string s)
+inline std::string xmlClean(std::string s)
 {
 	std::string ret;
 	for (char c : s) {
