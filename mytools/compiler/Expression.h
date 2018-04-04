@@ -8,27 +8,38 @@ class CompilerEngine;
 
 class Expression {
 public:
-	Expression() : m_term(nullptr) {}
+	Expression() : m_root(nullptr) {}
 	~Expression();
-	Term *term() { return m_term; }
+	bool isSingleTerm() { return m_root->type == Node::Leaf; }
+	Term *term() { return m_root->t; }
+	char op() { return m_root->op; }
+	Expression *right() { return m_root->right; }
 
 	static Expression *compileExpression(CompilerEngine *comp);
+	static Term *compileSingleTerm(CompilerEngine *comp);
 
 	friend class CompilerEngine;
 
 private:
 	struct ExpressionCompiler {
 		ExpressionCompiler(CompilerEngine *comp) : m_comp(comp) { }
-		Expression *compile();
-	private:
 		Expression *compileExpression();
 		Term *compileTerm();
 		std::vector<Expression *> compileParamList();
 		CompilerEngine *m_comp;
 	};
 
+	struct Node {
+		enum { Leaf, Op } type;
+		Term *t;
+		char op;
+		Expression *right;
+		~Node();
+		Node() :type(Leaf), t(nullptr), op('\0'), right(nullptr) {}
+	};
+
 private:
-	Term *m_term;
+	Node *m_root;
 };
 
 struct Term
@@ -83,8 +94,8 @@ struct Term
 			Term *content;
 			UnaryTerm_(char o, Term *e) : unaryOp(o), content(e) {}
 			~UnaryTerm_() { delete content; }
-			UnaryTerm_(UnaryTerm_&&o) : content(o.content) { o.content = nullptr; }
-			UnaryTerm_&operator=(UnaryTerm_&&o) { content = o.content; o.content = nullptr; return *this; }
+			UnaryTerm_(UnaryTerm_&&o) : content(o.content), unaryOp(o.unaryOp) { o.content = nullptr; }
+			UnaryTerm_&operator=(UnaryTerm_&&o) { content = o.content; unaryOp = o.unaryOp; o.content = nullptr; return *this; }
 		} unaryTerm;
 		~Content_() {}
 	} data;
@@ -129,7 +140,7 @@ struct Term
 
 	static Term *unaryTerm(char op, Term *sub) {
 		Term *t = new Term{ Term::Unary };
-		t->data.unaryTerm = Content_::UnaryTerm_{ op,sub };
+		t->data.unaryTerm = Content_::UnaryTerm_( op,sub );
 		return t;
 	}
 

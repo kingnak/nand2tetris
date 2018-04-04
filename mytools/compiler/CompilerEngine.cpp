@@ -306,18 +306,18 @@ bool CompilerEngine::compileStatements()
 
 bool CompilerEngine::compileDo()
 {
-	auto call = std::unique_ptr<Expression>(Expression::compileExpression(this));
-	if (call->term()->type != Term::Call) {
+	auto call = std::unique_ptr<Term>(Expression::compileSingleTerm(this));
+	if (call->type != Term::Call) {
 		return setError("Do requires function call");
 	}
-	m_gen->writeDo(call->term());
+	m_gen->writeDo(call.get());
 	return expect(';');
 }
 
 bool CompilerEngine::compileLet()
 {
-	auto lhs = std::unique_ptr<Expression>(Expression::compileExpression(this));
-	if (lhs->term()->type != Term::Variable && lhs->term()->type != Term::Array)
+	auto lhs = std::unique_ptr<Term>(Expression::compileSingleTerm(this));
+	if (lhs->type != Term::Variable && lhs->type != Term::Array)
 		return setError("LHS of let must be variable or array");
 	
 	if (!expect('='))
@@ -327,7 +327,7 @@ bool CompilerEngine::compileLet()
 	if (!expect(';'))
 		return false;
 
-	m_gen->writeLet(lhs->term(), rhs.get());
+	m_gen->writeLet(lhs.get(), rhs.get());
 
 	return true;
 }

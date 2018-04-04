@@ -272,6 +272,11 @@ bool AnalyzerGenerator::printExpression(Expression *e)
 	print("<expression>");
 	m_ident++;
 	bool ok = printTerm(e->term());
+	while (!e->isSingleTerm()) {
+		printSymbol(e->op());
+		e = e->right();
+		ok &= printTerm(e->term());
+	}
 	m_ident--;
 	print("</expression>");
 	return ok;
@@ -355,7 +360,7 @@ void AnalyzerGenerator::printIdent(const std::string &ident)
 
 void AnalyzerGenerator::printSymbol(char sym)
 {
-	print("<symbol> " + string(1, sym) + " </symbol>");
+	print("<symbol> " + xmlClean(sym) + " </symbol>");
 }
 
 void AnalyzerGenerator::printKeyword(const std::string &keyword)

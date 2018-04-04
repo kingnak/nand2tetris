@@ -1,25 +1,54 @@
 #include "Expression.h"
 #include "CompilerEngine.h"
 
+Expression::Node::~Node() 
+{
+	delete t; 
+	delete right; 
+}
+
 Expression *Expression::compileExpression(CompilerEngine *comp)
 {
-	return ExpressionCompiler(comp).compile();
+	return ExpressionCompiler(comp).compileExpression();
 }
 
 Expression::~Expression()
 {
-	delete m_term; 
+	delete m_root; 
 }
 
-Expression *Expression::ExpressionCompiler::compile()
+Term *Expression::compileSingleTerm(CompilerEngine *comp)
 {
-	return compileExpression();
+	return ExpressionCompiler(comp).compileTerm();
 }
 
 Expression *Expression::ExpressionCompiler::compileExpression()
 {
 	Expression *ret = new Expression;
-	ret->m_term = compileTerm();
+	ret->m_root = new Node;
+
+	ret->m_root->t = compileTerm();
+	if (m_comp->accept(Tokenizer::TokenType::Symbol)) {
+		switch (m_comp->m_tok->symbol()) {
+		case '&':
+		case '|':
+		case '+':
+		case '-':
+		case '*':
+		case '/':
+		case '<':
+		case '>':
+		case '=':
+			ret->m_root->type = Node::Op;
+			ret->m_root->op = m_comp->m_tok->symbol();
+			m_comp->consume();
+			ret->m_root->right = compileExpression();
+			break;
+		default:
+			break;
+		}
+	}
+
 	return ret;
 }
 
