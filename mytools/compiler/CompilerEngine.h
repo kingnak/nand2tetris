@@ -29,10 +29,8 @@ private:
 	bool compileDo();
 	bool compileLet();
 	bool compileWhile();
+	bool compileReturn();
 	bool compileIf();
-	bool compileExpression();
-	bool compileTerm();
-	bool compileExpressionList();
 
 private:
 	struct VarDef {

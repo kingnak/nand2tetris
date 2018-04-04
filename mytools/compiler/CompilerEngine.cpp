@@ -288,44 +288,114 @@ bool CompilerEngine::compileStatements()
 		if (accept(Tokenizer::Keyword::Let)) {
 			if (!compileLet()) return false;
 		} else if (accept(Tokenizer::Keyword::Do)) {
+			if (!compileDo()) return false;
 		} else if (accept(Tokenizer::Keyword::While)) {
+			if (!compileWhile()) return false;
 		} else if (accept(Tokenizer::Keyword::If)) {
+			if (!compileIf()) return false;
 		} else if (accept(Tokenizer::Keyword::Return)) {
+			if (!compileReturn()) return false;
 		} else {
-			return false;
+			break;
 		}
 	} while (true);
-}
 
+	m_gen->endStatements();
+	return expect('}');
+}
 
 bool CompilerEngine::compileDo()
 {
-	return false;
+	auto call = std::unique_ptr<Expression>(Expression::compileExpression(this));
+	if (call->term()->type != Term::Call) {
+		return setError("Do requires function call");
+	}
+	m_gen->writeDo(call->term());
+	return expect(';');
 }
-
 
 bool CompilerEngine::compileLet()
 {
 	auto lhs = std::unique_ptr<Expression>(Expression::compileExpression(this));
-	if (lhs->term()->type != Term::Variable && lhs->term()->type != Term::Array) {
+	if (lhs->term()->type != Term::Variable && lhs->term()->type != Term::Array)
+		return setError("LHS of let must be variable or array");
+	
+	if (!expect('='))
 		return false;
-	}
-	cout << lhs->term()->data.variableTerm.identifier << endl;
-	if (!expect('=')) {
-		return false;
-	}
+
 	auto rhs = std::unique_ptr<Expression>(Expression::compileExpression(this));
-	return expect(';');
-	return false;
+	if (!expect(';'))
+		return false;
+
+	m_gen->writeLet(lhs->term(), rhs.get());
+
+	return true;
 }
 
-/*
-bool CompilerEngine::compileWhile();
-bool CompilerEngine::compileIf();
-bool CompilerEngine::compileExpression();
-bool CompilerEngine::compileTerm();
-bool CompilerEngine::compileExpressionList();
-*/
+bool CompilerEngine::compileWhile()
+{
+	if (!expect('('))
+		return false;
+	
+	auto cond = std::unique_ptr<Expression> (Expression::compileExpression(this));
+
+	if (!expect(')'))
+		return false;
+	
+	if (!expect('{'))
+		return false;
+
+	std::string token;
+	m_gen->beginWhile(cond.get(), token);
+
+	if (!compileStatements())
+		return false;
+
+	m_gen->endWhile(token);
+	return true;
+}
+
+bool CompilerEngine::compileReturn()
+{
+	if (accept(';')) {
+		return m_gen->writeReturn(nullptr);
+	}
+
+	auto ret = std::unique_ptr<Expression>(Expression::compileExpression(this));
+	m_gen->writeReturn(ret.get());
+	return expect(';');
+}
+
+bool CompilerEngine::compileIf()
+{
+	if (!expect('('))
+		return false;
+
+	auto cond = std::unique_ptr<Expression> (Expression::compileExpression(this));
+
+	if (!expect(')'))
+		return false;
+
+	if (!expect('{'))
+		return false;
+
+	std::string token;
+	m_gen->beginIf(cond.get(), token);
+
+	if (!compileStatements())
+		return false;
+
+	if (accept(Tokenizer::Keyword::Else)) {
+		if (!expect('{'))
+			return false;
+		m_gen->insertElse(token);
+		if (!compileStatements())
+			return false;
+	}
+
+	m_gen->endIf(token);
+	return true;
+}
 
 bool CompilerEngine::parseVarDef(VarDef &def)
 {
