@@ -3,6 +3,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include "Expression.h"
 #include "Tokenizer.h"
 #include "CodeGenerator.h"
 
@@ -52,6 +53,8 @@ private:
 	bool consume();
 
 	bool setError(std::string error);
+
+	friend struct Expression::ExpressionCompiler;
 
 private:
 	CodeGeneratorFactory *m_fac;

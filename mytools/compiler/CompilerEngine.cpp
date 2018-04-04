@@ -2,8 +2,10 @@
 #include "CodeGenerator.h"
 #include "Tokenizer.h"
 #include "XMLHelper.hpp"
+#include "Expression.h"
 #include <map>
 #include <vector>
+#include <memory>
 
 using namespace std;
 
@@ -82,7 +84,7 @@ bool CompilerEngine::tokenize(std::istream &in, std::ostream &out)
 			break;
 		case Tokenizer::TokenType::End:
 			out << "</tokens>\n";
-break;
+			break;
 		case Tokenizer::TokenType::Error:
 			out << "ERROR " << m_tok->error() << "\n";
 			break;
@@ -298,11 +300,26 @@ bool CompilerEngine::compileStatements()
 
 bool CompilerEngine::compileDo()
 {
+	return false;
+}
 
+
+bool CompilerEngine::compileLet()
+{
+	auto lhs = std::unique_ptr<Expression>(Expression::compileExpression(this));
+	if (lhs->term()->type != Term::Variable && lhs->term()->type != Term::Array) {
+		return false;
+	}
+	cout << lhs->term()->data.variableTerm.identifier << endl;
+	if (!expect('=')) {
+		return false;
+	}
+	auto rhs = std::unique_ptr<Expression>(Expression::compileExpression(this));
+	return expect(';');
+	return false;
 }
 
 /*
-bool CompilerEngine::compileLet();
 bool CompilerEngine::compileWhile();
 bool CompilerEngine::compileIf();
 bool CompilerEngine::compileExpression();
