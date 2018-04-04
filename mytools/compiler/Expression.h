@@ -43,6 +43,8 @@ struct Term
 		struct StringTerm_ {
 			std::string value;
 			~StringTerm_() = default;
+			StringTerm_(StringTerm_&&) = default;
+			StringTerm_&operator=(StringTerm_&&) = default;
 		} stringTerm;
 		struct KeywordTerm_ {
 			Tokenizer::Keyword value;
@@ -50,11 +52,16 @@ struct Term
 		struct VariableTerm_ {
 			std::string identifier;
 			~VariableTerm_() = default;
+			VariableTerm_(VariableTerm_&&) = default;
+			VariableTerm_&operator=(VariableTerm_&&) = default;
 		} variableTerm;
 		struct ArrayTerm_ {
 			std::string identifier;
-			Expression *expression = nullptr;
-			~ArrayTerm_() { delete expression; }
+			Expression *index = nullptr;
+			ArrayTerm_(const std::string i, Expression *e) : identifier(std::move(i)), index(e) {}
+			~ArrayTerm_() { delete index; }
+			ArrayTerm_(ArrayTerm_&&o) : index(o.index), identifier(std::move(o.identifier)) { o.index = nullptr; }
+			ArrayTerm_&operator=(ArrayTerm_&&o) { index = o.index; o.index = nullptr; identifier = std::move(o.identifier); return *this; }
 		} arrayTerm;
 		struct CallTerm_ {
 			std::string target;
@@ -65,13 +72,19 @@ struct Term
 			CallTerm_&operator=(CallTerm_&&) = default;
 		} callTerm;
 		struct BracketTerm_ {
-			Term *content;
+			Expression *content;
+			BracketTerm_(Expression *e) : content(e) {}
 			~BracketTerm_() { delete content; }
+			BracketTerm_(BracketTerm_&&o) : content(o.content) { o.content = nullptr; }
+			BracketTerm_&operator=(BracketTerm_&&o) { content = o.content; o.content= nullptr; return *this; }
 		} bracketTerm;
 		struct UnaryTerm_ {
 			char unaryOp;
 			Term *content;
+			UnaryTerm_(char o, Term *e) : unaryOp(o), content(e) {}
 			~UnaryTerm_() { delete content; }
+			UnaryTerm_(UnaryTerm_&&o) : content(o.content) { o.content = nullptr; }
+			UnaryTerm_&operator=(UnaryTerm_&&o) { content = o.content; o.content = nullptr; return *this; }
 		} unaryTerm;
 		~Content_() {}
 	} data;
@@ -120,9 +133,9 @@ struct Term
 		return t;
 	}
 
-	static Term *bracketedTerm(Term *sub) {
+	static Term *bracketedTerm(Expression *sub) {
 		Term *t = new Term{ Term::Bracketed };
-		t->data.bracketTerm = Content_::BracketTerm_{ sub };
+		t->data.bracketTerm = Content_::BracketTerm_( sub );
 		return t;
 	}
 
@@ -140,7 +153,7 @@ struct Term
 
 	static Term *arrayTerm(const std::string &var, Expression *idx) {
 		Term *t = new Term{ Term::Array };
-		t->data.arrayTerm = Content_::ArrayTerm_{ var,idx };
+		t->data.arrayTerm = Content_::ArrayTerm_( var, idx );
 		return t;
 	}
 };

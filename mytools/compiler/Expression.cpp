@@ -75,7 +75,7 @@ Term *Expression::ExpressionCompiler::compileTerm()
 	}
 
 	if (m_comp->accept('(')) {
-		Term *t = Term::bracketedTerm(compileTerm());
+		Term *t = Term::bracketedTerm(compileExpression());
 		if (!m_comp->expect(')')) {
 			delete t;
 			return nullptr;
