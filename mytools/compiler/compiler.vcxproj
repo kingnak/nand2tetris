@@ -149,6 +149,7 @@
     <ClCompile Include="CompilerEngine.cpp" />
     <ClCompile Include="Expression.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="SymbolTable.cpp" />
     <ClCompile Include="Tokenizer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -156,6 +157,7 @@
     <ClInclude Include="CodeGenerator.h" />
     <ClInclude Include="CompilerEngine.h" />
     <ClInclude Include="Expression.h" />
+    <ClInclude Include="SymbolTable.h" />
     <ClInclude Include="Tokenizer.h" />
     <ClInclude Include="XMLHelper.hpp" />
   </ItemGroup>

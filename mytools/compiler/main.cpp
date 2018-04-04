@@ -10,7 +10,8 @@ int main(int argc, char **argv)
 {
 	enum {
 		TokenizeOnly = CmdLineHelper::CustomArgBase,
-		AnalyzeOnly = CmdLineHelper::CustomArgBase<<1
+		AnalyzeOnly = CmdLineHelper::CustomArgBase<<1,
+		ExtendAnalyzeOnly = CmdLineHelper::CustomArgBase<<2
 	};
 
 	CmdLineHelper c;
@@ -18,6 +19,7 @@ int main(int argc, char **argv)
 	c.addDefaultArgs(CmdLineHelper::Help | CmdLineHelper::Debug);
 	c.addCustomArg("-t", "--tokenize", TokenizeOnly);
 	c.addCustomArg("-a", "--analyze", AnalyzeOnly);
+	c.addCustomArg("-ea", "--extended-analyze", ExtendAnalyzeOnly);
 	
 	if (!c.handleCmdLine(argc, argv, false) || c.isHelp()) {
 		cerr << c.usage() << endl;
@@ -27,7 +29,9 @@ int main(int argc, char **argv)
 	bool tokenize = c.isFlagSet(TokenizeOnly);
 	CodeGeneratorFactory *factory = nullptr;
 	if (c.isFlagSet(AnalyzeOnly)) {
-		factory = new AnalyzerGeneratorFactory;
+		factory = new AnalyzerGeneratorFactory(false);
+	} else if (c.isFlagSet(ExtendAnalyzeOnly)) {
+		factory = new AnalyzerGeneratorFactory(true);
 	}
 
 	if (!factory && !tokenize) {

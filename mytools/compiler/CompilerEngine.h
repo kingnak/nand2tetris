@@ -34,12 +34,12 @@ private:
 
 private:
 	struct VarDef {
-		CodeGenerator::DataType type;
+		SymbolTable::Type type;
 		std::string className;
 		std::vector<std::string> vars;
 	};
 	bool parseVarDef(VarDef &def);
-	CodeGenerator::DataType parseType();
+	SymbolTable::Type parseType();
 
 private:
 	bool accept(Tokenizer::TokenType token);

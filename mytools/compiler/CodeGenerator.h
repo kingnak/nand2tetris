@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "SymbolTable.h"
 
 struct Term;
 class Expression;
@@ -10,12 +11,8 @@ class Expression;
 class CodeGenerator
 {
 public:
-	enum class DataType {
-		None, Void, Int, Char, Boolean, Class
-	};
-
 	struct Parameter {
-		DataType type;
+		SymbolTable::Type type;
 		std::string classType;
 		std::string name;
 	};
@@ -24,18 +21,18 @@ public:
 
 	virtual bool startClass(const std::string &name) = 0;
 	virtual bool endClass() = 0;
-	virtual bool declareStaticVariables(DataType type, const std::string &classType, const std::vector<std::string> &names) = 0;
-	virtual bool declareFieldVariables(DataType type, const std::string &classType, const std::vector<std::string> &names) = 0;
+	virtual bool declareStaticVariables(SymbolTable::Type type, const std::string &classType, const std::vector<std::string> &names) = 0;
+	virtual bool declareFieldVariables(SymbolTable::Type type, const std::string &classType, const std::vector<std::string> &names) = 0;
 	virtual bool startConstructor(const std::string &className, const std::string &funcName) = 0;
 	virtual bool endConstructor() = 0;
-	virtual bool startMethod(DataType retType, const std::string &retName, const std::string &funcName) = 0;
+	virtual bool startMethod(SymbolTable::Type retType, const std::string &retName, const std::string &funcName) = 0;
 	virtual bool endMethod() = 0;
-	virtual bool startFunction(DataType retType, const std::string &retName, const std::string &funcName) = 0;
+	virtual bool startFunction(SymbolTable::Type retType, const std::string &retName, const std::string &funcName) = 0;
 	virtual bool endFunction() = 0;
 	virtual bool declareParameters(const std::vector<Parameter> &params) = 0;
 	virtual bool startSubroutineBody() = 0;
 	virtual bool endSubroutineBody() = 0;
-	virtual bool declareVariable(DataType type, const std::string &classType, const std::vector<std::string> &names) = 0;
+	virtual bool declareVariable(SymbolTable::Type type, const std::string &classType, const std::vector<std::string> &names) = 0;
 	virtual bool startStatements() = 0;
 	virtual bool endStatements() = 0;
 	virtual bool beginWhile(Expression *cond, std::string &token) = 0;

@@ -3,16 +3,27 @@
 #include <map>
 #include <sstream>
 #include "Expression.h"
+#include "SymbolTable.h"
 
 using namespace std;
 
-static map<CodeGenerator::DataType, string> s_datatypes{
-	{ CodeGenerator::DataType::None, "None" },
-	{ CodeGenerator::DataType::Void, "void" },
-	{ CodeGenerator::DataType::Int, "int" },
-	{ CodeGenerator::DataType::Char, "char" },
-	{ CodeGenerator::DataType::Boolean, "boolean" },
-	{ CodeGenerator::DataType::Class, "Class" }
+static map<SymbolTable::Type, string> s_datatypes{
+	{ SymbolTable::Type::None, "None" },
+	{ SymbolTable::Type::Void, "void" },
+	{ SymbolTable::Type::Int, "int" },
+	{ SymbolTable::Type::Char, "char" },
+	{ SymbolTable::Type::Boolean, "boolean" },
+	{ SymbolTable::Type::Class, "Class" }
+};
+
+static map<SymbolTable::Kind, string> s_varkinds{
+	{ SymbolTable::Kind::NONE, "NONE" },
+	{ SymbolTable::Kind::Static, "Static" },
+	{ SymbolTable::Kind::Field, "Field" },
+	{ SymbolTable::Kind::Argument, "Argument" },
+	{ SymbolTable::Kind::Var, "Var" },
+	{ SymbolTable::Kind::Class, "Class" },
+	{ SymbolTable::Kind::Func, "Func" }
 };
 
 static map<Tokenizer::Keyword, string> s_kw{
@@ -41,10 +52,12 @@ static map<Tokenizer::Keyword, string> s_kw{
 
 bool AnalyzerGenerator::startClass(const std::string &name)
 {
+	m_symbols = new SymbolTable;
 	print("<class>");
 	m_ident++;
 	printKeyword("class");
-	printIdent(name);
+	m_symbols->add(SymbolTable::Symbol{ SymbolTable::Kind::Class, SymbolTable::Type::Class, name, name, 0 });
+	printIdent(name, true);
 	printSymbol('{');
 	return true;
 }
@@ -57,21 +70,21 @@ bool AnalyzerGenerator::endClass()
 	return true;
 }
 
-bool AnalyzerGenerator::declareStaticVariables(DataType type, const std::string &classType, const std::vector<std::string> &names)
+bool AnalyzerGenerator::declareStaticVariables(SymbolTable::Type type, const std::string &classType, const std::vector<std::string> &names)
 {
 	print("<classVarDec>");
 	m_ident++;
-	doPrintVar("static", type, classType, names);
+	doPrintVar(SymbolTable::Kind::Static, type, classType, names);
 	m_ident--;
 	print("</classVarDec>");
 	return true;
 }
 
-bool AnalyzerGenerator::declareFieldVariables(DataType type, const std::string &classType, const std::vector<std::string> &names)
+bool AnalyzerGenerator::declareFieldVariables(SymbolTable::Type type, const std::string &classType, const std::vector<std::string> &names)
 {
 	print("<classVarDec>");
 	m_ident++;
-	doPrintVar("field", type, classType, names);
+	doPrintVar(SymbolTable::Kind::Field, type, classType, names);
 	m_ident--;
 	print("</classVarDec>");
 	return true;
@@ -79,17 +92,17 @@ bool AnalyzerGenerator::declareFieldVariables(DataType type, const std::string &
 
 bool AnalyzerGenerator::startConstructor(const std::string &className, const std::string &funcName)
 {
-	doPrintSubroutineStart("constructor", DataType::Class, className, funcName);
+	doPrintSubroutineStart("constructor", SymbolTable::Type::Class, className, funcName);
 	return true;
 }
 
-bool AnalyzerGenerator::startMethod(DataType retType, const std::string &retName, const std::string &funcName)
+bool AnalyzerGenerator::startMethod(SymbolTable::Type retType, const std::string &retName, const std::string &funcName)
 {
 	doPrintSubroutineStart("method", retType, retName, funcName);
 	return true;
 }
 
-bool AnalyzerGenerator::startFunction(DataType retType, const std::string &retName, const std::string &funcName)
+bool AnalyzerGenerator::startFunction(SymbolTable::Type retType, const std::string &retName, const std::string &funcName)
 {
 	doPrintSubroutineStart("function", retType, retName, funcName);
 	return true;
@@ -104,7 +117,8 @@ bool AnalyzerGenerator::declareParameters(const std::vector<Parameter> &params)
 		if (it != params.begin())
 			printSymbol(',');
 		doPrintType(it->type, it->classType);
-		printIdent(it->name);
+		m_symbols->add(SymbolTable::Symbol{ SymbolTable::Kind::Argument, it->type, it->classType, it->name, 0 });
+		printIdent(it->name, true);
 	}
 	m_ident--;
 	print("</parameterList>");
@@ -120,11 +134,11 @@ bool AnalyzerGenerator::startSubroutineBody()
 	return true;
 }
 
-bool AnalyzerGenerator::declareVariable(DataType type, const std::string &classType, const std::vector<std::string> &names)
+bool AnalyzerGenerator::declareVariable(SymbolTable::Type type, const std::string &classType, const std::vector<std::string> &names)
 {
 	print("<varDec>");
 	m_ident++;
-	doPrintVar("var", type, classType, names);
+	doPrintVar(SymbolTable::Kind::Var, type, classType, names);
 	m_ident--;
 	print("</varDec>");
 	return true;
@@ -218,9 +232,9 @@ bool AnalyzerGenerator::writeLet(Term *lhs, Expression *rhs)
 	m_ident++;
 	printKeyword("let");
 	if (lhs->type == Term::Variable) {
-		printIdent(lhs->data.variableTerm.identifier);
+		printIdent(lhs->data.variableTerm.identifier, false);
 	} else if (lhs->type == Term::Array) {
-		printIdent(lhs->data.arrayTerm.identifier);
+		printIdent(lhs->data.arrayTerm.identifier, false);
 		printSymbol('[');
 		if (!printExpression(lhs->data.arrayTerm.index))
 			return false;
@@ -300,7 +314,7 @@ bool AnalyzerGenerator::printTerm(Term *t, bool wrapped)
 		printKeyword(s_kw.find(t->data.keywordTerm.value)->second);
 		break;
 	case Term::Variable:
-		printIdent(t->data.variableTerm.identifier);
+		printIdent(t->data.variableTerm.identifier, false);
 		break;
 	case Term::Unary:
 		printSymbol(t->data.unaryTerm.unaryOp);
@@ -312,7 +326,7 @@ bool AnalyzerGenerator::printTerm(Term *t, bool wrapped)
 		printSymbol(')');
 		break;
 	case Term::Array:
-		printIdent(t->data.arrayTerm.identifier);
+		printIdent(t->data.arrayTerm.identifier, false);
 		printSymbol('[');
 		ok = printExpression(t->data.arrayTerm.index);
 		printSymbol(']');
@@ -323,11 +337,16 @@ bool AnalyzerGenerator::printTerm(Term *t, bool wrapped)
 			if (t->data.callTerm.target == "this") {
 				printKeyword("this");
 			} else {
-				printIdent(t->data.callTerm.target);
+				// If this is an unknown variable, assume a static call
+				if (m_symbols->containsRecursive(t->data.callTerm.target)) {
+					printIdent(t->data.callTerm.target, false);
+				} else {
+					printIdent(SymbolTable::Symbol{ SymbolTable::Kind::Class, SymbolTable::Type::Class, t->data.callTerm.target, t->data.callTerm.target, 0 }, false);
+				}
 			}
 			printSymbol('.');
 		}
-		printIdent(t->data.callTerm.function);
+		printIdent(SymbolTable::Symbol{ SymbolTable::Kind::Func, SymbolTable::Type::None, "", t->data.callTerm.function, 0 }, false);
 		printSymbol('(');
 		print("<expressionList>");
 		m_ident++;
@@ -353,9 +372,47 @@ bool AnalyzerGenerator::printTerm(Term *t, bool wrapped)
 	return ok;
 }
 
-void AnalyzerGenerator::printIdent(const std::string &ident)
+void AnalyzerGenerator::printIdent(const SymbolTable::Symbol &s, bool defining)
 {
-	print("<identifier> " + xmlClean(ident) + " </identifier>");
+	if (m_withSymbols) {
+		stringstream ss;
+		ss << "<identifier ";
+		if (s.kind == SymbolTable::Kind::NONE) {
+			ss << "type=\"undefined\" ";
+		} else {
+			if (s.type == SymbolTable::Type::Class)
+				ss << "type=\"" << s.classType << "\" ";
+			else
+				ss << "type=\"" << s_datatypes.find(s.type)->second << "\" ";
+			ss << "kind=\"" << s_varkinds.find(s.kind)->second << "\" ";
+			switch (s.kind) {
+			case SymbolTable::Kind::Static:
+			case SymbolTable::Kind::Field:
+			case SymbolTable::Kind::Argument:
+			case SymbolTable::Kind::Var:
+				ss << "nr=\"" << s.order << "\" ";
+			}
+		}
+		if (defining)
+			ss << "access=\"define\">";
+		else
+			ss << "access=\"use\">";
+		ss << xmlClean(s.name);
+		ss << "</identifier>";
+		print(ss.str());
+	} else {
+		print("<identifier> " + xmlClean(s.name) + " </identifier>");
+	}
+}
+
+void AnalyzerGenerator::printIdent(const std::string &ident, bool defining)
+{
+	if (!m_symbols->containsRecursive(ident)) {
+		SymbolTable::Symbol s;
+		s.name = ident;
+		printIdent(s, defining);
+	} else 
+		printIdent(m_symbols->get(ident), defining);
 }
 
 void AnalyzerGenerator::printSymbol(char sym)
@@ -380,46 +437,59 @@ void AnalyzerGenerator::printConstant(const std::string &s)
 	print("<stringConstant> " + s + " </stringConstant>");
 }
 
-void AnalyzerGenerator::doPrintType(DataType type, const std::string &classType)
+void AnalyzerGenerator::doPrintType(SymbolTable::Type type, const std::string &classType)
 {
-	if (type == DataType::Class) {
-		printIdent(classType);
+	if (type == SymbolTable::Type::Class) {
+		printIdent(SymbolTable::Symbol{SymbolTable::Kind::Class, SymbolTable::Type::Class, classType, classType, 0}, false);
 	} else {
 		printKeyword(s_datatypes.find(type)->second);
 	}
 }
 
-void AnalyzerGenerator::doPrintVar(const std::string &prefix, DataType type, const std::string &classType, const std::vector<std::string> &names)
+void AnalyzerGenerator::doPrintVar(SymbolTable::Kind kind, SymbolTable::Type type, const std::string &classType, const std::vector<std::string> &names)
 {
-	printKeyword(prefix);
+	switch (kind) {
+	case SymbolTable::Kind::Static:
+		printKeyword("static");
+		break;
+	case SymbolTable::Kind::Field:
+		printKeyword("field");
+		break;
+	case SymbolTable::Kind::Var:
+		printKeyword("var");
+		break;
+	} 
+
 	doPrintType(type, classType);
 	for (auto it = names.begin(); it != names.end(); ++it) {
 		if (it != names.begin()) {
 			printSymbol(',');
 		}
-		printIdent(*it);
+		m_symbols->add(SymbolTable::Symbol{ kind, type, classType, *it, 0 });
+		printIdent(*it, true);
 	}
 	printSymbol(';');
 }
 
-void AnalyzerGenerator::doPrintSubroutineStart(const std::string &prefix, DataType retType, const std::string &retName, const std::string &funcName)
+void AnalyzerGenerator::doPrintSubroutineStart(const std::string &prefix, SymbolTable::Type retType, const std::string &retName, const std::string &funcName)
 {
 	print("<subroutineDec>");
 	m_ident++;
 	printKeyword(prefix);
 	doPrintType(retType, retName);
-	printIdent(funcName);
+	m_symbols->add(SymbolTable::Symbol{ SymbolTable::Kind::Func, retType, retName, funcName, 0 });
+	printIdent(funcName, true);
+	m_symbols = m_symbols->createSubTable();
 }
 
 void AnalyzerGenerator::doPrintSubroutineEnd()
 {
-	//m_ident--;
-	//print("</statements>");
 	printSymbol('}');
 	m_ident--;
 	print("</subroutineBody>");
 	m_ident--;
 	print("</subroutineDec>");
+	m_symbols = m_symbols->toParentAndDiscard();
 }
 
 void AnalyzerGenerator::print(const std::string &str)

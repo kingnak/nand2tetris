@@ -178,14 +178,14 @@ bool CompilerEngine::compileSubroutine()
 	}
 
 	string clsName;
-	CodeGenerator::DataType dt = CodeGenerator::DataType::None;
+	SymbolTable::Type dt = SymbolTable::Type::None;
 	if (accept(Tokenizer::TokenType::Identifier)) {
 		clsName = m_tok->identifier();
-		dt = CodeGenerator::DataType::Class;
+		dt = SymbolTable::Type::Class;
 		consume();
 	} else {
 		dt = parseType();
-		if (dt == CodeGenerator::DataType::None) {
+		if (dt == SymbolTable::Type::None) {
 			return false;
 		}
 	}
@@ -240,11 +240,11 @@ bool CompilerEngine::compileParameterList()
 			CodeGenerator::Parameter p;
 			if (accept(Tokenizer::TokenType::Identifier)) {
 				p.classType = m_tok->identifier();
-				p.type = CodeGenerator::DataType::Class;
+				p.type = SymbolTable::Type::Class;
 				consume();
 			} else {
 				p.type = parseType();
-				if (p.type == CodeGenerator::DataType::None || p.type == CodeGenerator::DataType::Void) {
+				if (p.type == SymbolTable::Type::None || p.type == SymbolTable::Type::Void) {
 					return setError("Expected Type");
 				}
 			}
@@ -402,11 +402,11 @@ bool CompilerEngine::parseVarDef(VarDef &def)
 	string classType;
 	if (accept(Tokenizer::TokenType::Identifier)) {
 		def.className = m_tok->identifier();
-		def.type = CodeGenerator::DataType::Class;
+		def.type = SymbolTable::Type::Class;
 		consume();
 	} else {
 		def.type = parseType();
-		if (def.type == CodeGenerator::DataType::None || def.type == CodeGenerator::DataType::Void)
+		if (def.type == SymbolTable::Type::None || def.type == SymbolTable::Type::Void)
 			return setError("Expected type");
 	}
 
@@ -428,13 +428,13 @@ bool CompilerEngine::parseVarDef(VarDef &def)
 	return expect(';');
 }
 
-CodeGenerator::DataType CompilerEngine::parseType()
+SymbolTable::Type CompilerEngine::parseType()
 {
-	if (accept(Tokenizer::Keyword::Void)) return CodeGenerator::DataType::Void;
-	if (accept(Tokenizer::Keyword::Int)) return CodeGenerator::DataType::Int;
-	if (accept(Tokenizer::Keyword::Char)) return CodeGenerator::DataType::Char;
-	if (accept(Tokenizer::Keyword::Boolean)) return CodeGenerator::DataType::Boolean;
-	return CodeGenerator::DataType::None;
+	if (accept(Tokenizer::Keyword::Void)) return SymbolTable::Type::Void;
+	if (accept(Tokenizer::Keyword::Int)) return SymbolTable::Type::Int;
+	if (accept(Tokenizer::Keyword::Char)) return SymbolTable::Type::Char;
+	if (accept(Tokenizer::Keyword::Boolean)) return SymbolTable::Type::Boolean;
+	return SymbolTable::Type::None;
 }
 
 bool CompilerEngine::accept(Tokenizer::TokenType token)
