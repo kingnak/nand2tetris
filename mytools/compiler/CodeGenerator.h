@@ -31,6 +31,7 @@ public:
 	virtual bool endFunction() = 0;
 	virtual bool declareParameters(const std::vector<Parameter> &params) = 0;
 	virtual bool startSubroutineBody() = 0;
+	virtual bool finishLocals() = 0;
 	virtual bool endSubroutineBody() = 0;
 	virtual bool declareVariable(SymbolTable::Type type, const std::string &classType, const std::vector<std::string> &names) = 0;
 	virtual bool startStatements() = 0;

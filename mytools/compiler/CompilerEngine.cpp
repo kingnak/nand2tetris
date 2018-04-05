@@ -214,6 +214,7 @@ bool CompilerEngine::compileSubroutine()
 	while (compileVarDec())
 		;
 
+	m_gen->finishLocals();
 	if (!compileStatements())
 		return false;
 

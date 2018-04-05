@@ -23,6 +23,7 @@ public:
 	bool endFunction() override;
 	bool declareParameters(const std::vector<Parameter> &params) override;
 	bool startSubroutineBody() override;
+	bool finishLocals() override { return true; }
 	bool endSubroutineBody() override { return true; }
 	bool declareVariable(SymbolTable::Type type, const std::string &classType, const std::vector<std::string> &names) override;
 	bool startStatements() override;
