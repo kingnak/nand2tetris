@@ -8,7 +8,7 @@ class SymbolTable;
 class AnalyzerGenerator : public CodeGenerator
 {
 public:
-	AnalyzerGenerator(std::ostream &o, bool withSymbols) : m_out(o), m_ident(0), m_withSymbols(withSymbols), m_symbols(nullptr) {}
+	AnalyzerGenerator(std::ostream &o, SymbolTable *rootSymbols, CallTracer *calls) : m_out(o), m_ident(0), m_symbols(rootSymbols), m_withSymbols(rootSymbols != nullptr), m_calls(calls) {}
 	~AnalyzerGenerator() {}
 
 	bool startClass(const std::string &name) override;
@@ -42,6 +42,7 @@ public:
 private:
 	bool printExpression(Expression *e);
 	bool printTerm(Term *t, bool wrapped = true);
+	void printCall(Term *t);
 
 private:
 	void printIdent(const SymbolTable::Symbol &s, bool defining);
@@ -52,23 +53,27 @@ private:
 	void printConstant(const std::string &s);
 	void doPrintType(SymbolTable::Type type, const std::string &classType);
 	void doPrintVar(SymbolTable::Kind kind, SymbolTable::Type type, const std::string &classType, const std::vector<std::string> &names);
-	void doPrintSubroutineStart(const std::string &prefix, SymbolTable::Type retType, const std::string &retName, const std::string &funcName);
+	void doPrintSubroutineStart(const std::string &prefix, SymbolTable::Type retType, const std::string &retName, const std::string &funcName, bool asStatic);
 	void doPrintSubroutineEnd();
 	void print(const std::string &str);
 
 private:
 	std::ostream &m_out;
 	int m_ident;
-	bool m_withSymbols;
 	SymbolTable *m_symbols;
+	CallTracer *m_calls;
+	bool m_withSymbols;
+	std::string m_clsContext;
+	std::string m_thisContext;
 };
 
 class AnalyzerGeneratorFactory : public CodeGeneratorFactory
 {
 public:
-	AnalyzerGeneratorFactory(bool withSymbols) : m_withSymbols(withSymbols) {}
+	AnalyzerGeneratorFactory(bool withSymbols);
+	~AnalyzerGeneratorFactory();
 	AnalyzerGenerator *create(std::ostream &out) override {
-		return new AnalyzerGenerator(out, m_withSymbols);
+		return new AnalyzerGenerator(out, m_rootSymbols, m_calls);
 	}
 	std::string getOutFileName(std::string baseFileName) const override {
 		return baseFileName + ".xml";
@@ -76,5 +81,7 @@ public:
 
 private:
 	bool m_withSymbols;
+	SymbolTable *m_rootSymbols;
+	CallTracer *m_calls;
 };
 

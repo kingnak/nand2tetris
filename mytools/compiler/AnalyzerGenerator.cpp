@@ -7,6 +7,27 @@
 
 using namespace std;
 
+AnalyzerGeneratorFactory::AnalyzerGeneratorFactory(bool withSymbols)
+	: m_rootSymbols(nullptr)
+	, m_calls(nullptr)
+{
+	if (withSymbols) {
+		m_rootSymbols = new SymbolTable;
+		m_calls = new CallTracer;
+	}
+}
+
+AnalyzerGeneratorFactory::~AnalyzerGeneratorFactory()
+{
+	if (m_calls) {
+		m_calls->injectDefaults();
+		m_calls->verify();
+	}
+
+	delete m_rootSymbols;
+	delete m_calls;
+}
+
 static map<SymbolTable::Type, string> s_datatypes{
 	{ SymbolTable::Type::None, "None" },
 	{ SymbolTable::Type::Void, "void" },
@@ -52,13 +73,18 @@ static map<Tokenizer::Keyword, string> s_kw{
 
 bool AnalyzerGenerator::startClass(const std::string &name)
 {
-	m_symbols = new SymbolTable;
+	if (m_symbols)
+		m_symbols = m_symbols->createSubTable(); 
+	else 
+		m_symbols = new SymbolTable;
+
 	print("<class>");
 	m_ident++;
 	printKeyword("class");
 	m_symbols->add(SymbolTable::Symbol{ SymbolTable::Kind::Class, SymbolTable::Type::Class, name, name, 0 });
 	printIdent(name, true);
 	printSymbol('{');
+	m_clsContext = name;
 	return true;
 }
 
@@ -67,6 +93,8 @@ bool AnalyzerGenerator::endClass()
 	printSymbol('}');
 	m_ident--;
 	print("</class>");
+	m_clsContext = "";
+	m_symbols = m_symbols->toParentAndDiscard();
 	return true;
 }
 
@@ -92,19 +120,21 @@ bool AnalyzerGenerator::declareFieldVariables(SymbolTable::Type type, const std:
 
 bool AnalyzerGenerator::startConstructor(const std::string &className, const std::string &funcName)
 {
-	doPrintSubroutineStart("constructor", SymbolTable::Type::Class, className, funcName);
+	m_thisContext = m_clsContext;
+	doPrintSubroutineStart("constructor", SymbolTable::Type::Class, className, funcName, true);
 	return true;
 }
 
 bool AnalyzerGenerator::startMethod(SymbolTable::Type retType, const std::string &retName, const std::string &funcName)
 {
-	doPrintSubroutineStart("method", retType, retName, funcName);
+	m_thisContext = m_clsContext;
+	doPrintSubroutineStart("method", retType, retName, funcName, false);
 	return true;
 }
 
 bool AnalyzerGenerator::startFunction(SymbolTable::Type retType, const std::string &retName, const std::string &funcName)
 {
-	doPrintSubroutineStart("function", retType, retName, funcName);
+	doPrintSubroutineStart("function", retType, retName, funcName, true);
 	return true;
 }
 
@@ -332,33 +362,7 @@ bool AnalyzerGenerator::printTerm(Term *t, bool wrapped)
 		printSymbol(']');
 		break;
 	case Term::Call:
-		if (t->data.callTerm.target.length() > 0) {
-			// Special case: This
-			if (t->data.callTerm.target == "this") {
-				printKeyword("this");
-			} else {
-				// If this is an unknown variable, assume a static call
-				if (m_symbols->containsRecursive(t->data.callTerm.target)) {
-					printIdent(t->data.callTerm.target, false);
-				} else {
-					printIdent(SymbolTable::Symbol{ SymbolTable::Kind::Class, SymbolTable::Type::Class, t->data.callTerm.target, t->data.callTerm.target, 0 }, false);
-				}
-			}
-			printSymbol('.');
-		}
-		printIdent(SymbolTable::Symbol{ SymbolTable::Kind::Func, SymbolTable::Type::None, "", t->data.callTerm.function, 0 }, false);
-		printSymbol('(');
-		print("<expressionList>");
-		m_ident++;
-		for (auto it = t->data.callTerm.params.begin(); it != t->data.callTerm.params.end(); ++it) {
-			if (it != t->data.callTerm.params.begin()) {
-				printSymbol(',');
-			}
-			ok &= printExpression(*it);
-		}
-		m_ident--;
-		print("</expressionList>");
-		printSymbol(')');
+		printCall(t);
 		break;
 	default:
 		ok = false;
@@ -370,6 +374,57 @@ bool AnalyzerGenerator::printTerm(Term *t, bool wrapped)
 	}
 
 	return ok;
+}
+
+void AnalyzerGenerator::printCall(Term *t)
+{
+	std::string realTarget;
+	bool asStatic = false;
+	if (t->data.callTerm.target.length() > 0) {
+		// Special case: This
+		if (t->data.callTerm.target == "this") {
+			printKeyword("this");
+			realTarget = m_thisContext;
+		} else {
+			// If this is an unknown variable, assume a static call
+			if (!m_symbols->containsRecursive(t->data.callTerm.target)) {
+				asStatic = true;
+				printIdent(SymbolTable::Symbol{ SymbolTable::Kind::Class, SymbolTable::Type::Class, t->data.callTerm.target, t->data.callTerm.target, 0 }, false);
+				realTarget = t->data.callTerm.target;
+			} else {
+				printIdent(t->data.callTerm.target, false);
+				realTarget = m_symbols->get(t->data.callTerm.target).classType;
+				asStatic = m_symbols->get(t->data.callTerm.target).kind == SymbolTable::Kind::Class;
+			}
+		}
+		printSymbol('.');
+	} else if (m_thisContext.length() > 0) {
+		realTarget = m_thisContext;
+	} else {
+		realTarget = m_clsContext;
+		asStatic = true;
+	}
+
+	if (m_withSymbols)
+		realTarget = realTarget + "." + t->data.callTerm.function;
+	else
+		realTarget = t->data.callTerm.function;
+
+	if (m_calls) m_calls->addCall(realTarget, asStatic, {}, {}, 0);
+
+	printIdent(SymbolTable::Symbol{ SymbolTable::Kind::Func, SymbolTable::Type::None, "", realTarget, 0 }, false);
+	printSymbol('(');
+	print("<expressionList>");
+	m_ident++;
+	for (auto it = t->data.callTerm.params.begin(); it != t->data.callTerm.params.end(); ++it) {
+		if (it != t->data.callTerm.params.begin()) {
+			printSymbol(',');
+		}
+		printExpression(*it);
+	}
+	m_ident--;
+	print("</expressionList>");
+	printSymbol(')');
 }
 
 void AnalyzerGenerator::printIdent(const SymbolTable::Symbol &s, bool defining)
@@ -471,13 +526,14 @@ void AnalyzerGenerator::doPrintVar(SymbolTable::Kind kind, SymbolTable::Type typ
 	printSymbol(';');
 }
 
-void AnalyzerGenerator::doPrintSubroutineStart(const std::string &prefix, SymbolTable::Type retType, const std::string &retName, const std::string &funcName)
+void AnalyzerGenerator::doPrintSubroutineStart(const std::string &prefix, SymbolTable::Type retType, const std::string &retName, const std::string &funcName, bool asStatic)
 {
 	print("<subroutineDec>");
 	m_ident++;
 	printKeyword(prefix);
 	doPrintType(retType, retName);
-	m_symbols->add(SymbolTable::Symbol{ SymbolTable::Kind::Func, retType, retName, funcName, 0 });
+	m_symbols->add(SymbolTable::Symbol{ SymbolTable::Kind::Func, retType, retName, m_clsContext + "." + funcName, 0 });
+	if (m_calls) m_calls->addDef(m_clsContext + "." + funcName, asStatic, {});
 	printIdent(funcName, true);
 	m_symbols = m_symbols->createSubTable();
 }
@@ -489,6 +545,7 @@ void AnalyzerGenerator::doPrintSubroutineEnd()
 	print("</subroutineBody>");
 	m_ident--;
 	print("</subroutineDec>");
+	m_thisContext = "";
 	m_symbols = m_symbols->toParentAndDiscard();
 }
 

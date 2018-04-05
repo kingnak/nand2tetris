@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <map>
+#include <vector>
 
 class SymbolTable
 {
@@ -33,4 +34,40 @@ public:
 private:
 	std::map<std::string, Symbol> m_syms;
 	SymbolTable *m_parent;
+	
+public:
+	auto begin() -> decltype(m_syms.cbegin()) { return m_syms.cbegin(); }
+	auto end() -> decltype(m_syms.cend()) { return m_syms.cend(); }
+};
+
+class CallTracer
+{
+public:
+	struct Type {
+		using DataType = SymbolTable::Type;
+		DataType dataType;
+		std::string classType;
+	};
+
+	void addCall(const std::string &method, bool asStatic, const std::vector<Type> &params, const std::string &site, int loc);
+	void addDef(const std::string &method, bool asStatic, const std::vector<Type> &params);
+
+	bool verify();
+	void injectDefaults();
+
+private:
+	struct Def {
+		std::string name;
+		std::vector<Type> params;
+		bool isStatic;
+	};
+	struct Call {
+		std::string name;
+		std::vector<Type> params;
+		bool isStatic;
+		std::string site;
+		int loc;
+	};
+	std::vector<Call> m_calls;
+	std::map<std::string, Def> m_defs;
 };
