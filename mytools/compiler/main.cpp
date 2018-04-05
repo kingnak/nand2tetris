@@ -3,6 +3,7 @@
 #include <fstream>
 #include "CompilerEngine.h"
 #include "AnalyzerGenerator.h"
+#include "VmGenerator.h"
 
 using namespace std;
 
@@ -32,6 +33,8 @@ int main(int argc, char **argv)
 		factory = new AnalyzerGeneratorFactory(false);
 	} else if (c.isFlagSet(ExtendAnalyzeOnly)) {
 		factory = new AnalyzerGeneratorFactory(true);
+	} else {
+		factory = new VmGeneratorFactory;
 	}
 
 	if (!factory && !tokenize) {
