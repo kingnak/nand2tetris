@@ -1,11 +1,14 @@
 #include "VmGenerator.h"
+#include "DebugGenerator.h"
 #include "SymbolTable.h"
 #include "Expression.h"
 #include <algorithm>
+#include <sstream>
 
-VmGeneratorFactory::VmGeneratorFactory()
+VmGeneratorFactory::VmGeneratorFactory(bool debug)
 	: m_rootSymbols(new SymbolTable)
 	, m_tracer(new CallTracer)
+	, m_debug(debug)
 {
 }
 
@@ -16,7 +19,10 @@ VmGeneratorFactory::~VmGeneratorFactory()
 
 CodeGenerator *VmGeneratorFactory::create(std::ostream &out)
 {
-	return new VmGenerator(out, m_rootSymbols, m_tracer);
+	CodeGenerator *ret = new VmGenerator(out, m_rootSymbols, m_tracer);
+	if (m_debug)
+		ret = new DebugGenerator(ret, out);
+	return ret;
 }
 
 std::string VmGeneratorFactory::getOutFileName(std::string baseFileName) const 
@@ -29,6 +35,7 @@ std::string VmGeneratorFactory::getOutFileName(std::string baseFileName) const
 VmGenerator::VmGenerator(std::ostream &out, SymbolTable *rootSymbols, CallTracer *tracer)
 	: m_out(out)
 	, m_tracer(tracer)
+	, m_nextLabelToken(0)
 {
 	m_symbols = rootSymbols->createSubTable();
 }
@@ -157,32 +164,60 @@ bool VmGenerator::endStatements()
 
 bool VmGenerator::beginWhile(Expression *cond, std::string &token)
 {
+	token = newLabelToken();
+	m_out << "label " << token << "_Start\n";
+	writeExpression(cond);
+	m_out << "not\n";
+	m_out << "if-goto " << token << "_End\n";
 	return true;
 }
 
 bool VmGenerator::endWhile(const std::string &token)
 {
+	m_out << "goto " << token << "_Start\n";
+	m_out << "label " << token << "_End\n";
 	return true;
 }
 
 bool VmGenerator::beginIf(Expression *cond, std::string &token)
 {
+	token = newLabelToken();
+	writeExpression(cond);
+	m_out << "not\n";
+	m_out << "if-goto " << token << "_False\n";
 	return true;
 }
 
 bool VmGenerator::insertElse(const std::string &token)
 {
+	m_out << "goto " << token << "_End\n";
+	m_out << "label " << token << "_False\n";
+	return true;
+}
+
+bool VmGenerator::noElse(const std::string &token)
+{
+	m_out << "label " << token << "_False\n";
 	return true;
 }
 
 bool VmGenerator::endIf(const std::string &token)
 {
+	m_out << "label " << token << "_End\n";
 	return true;
 }
 
 bool VmGenerator::writeLet(Term *lhs, Expression *rhs)
 {
-	return true;
+	if (!writeExpression(rhs))
+		return false;
+	if (lhs->type == Term::Variable) {
+		m_out << "pop ";
+		return writeVar(lhs->data.variableTerm.identifier);
+	}
+	// TODO Array
+
+	return false;
 }
 
 bool VmGenerator::writeDo(Term *call)
@@ -245,13 +280,36 @@ bool VmGenerator::writeTerm(Term *term)
 		m_out << "push constant " << term->data.intTerm.value << "\n";
 		return true;
 	case Term::StringConst:
+		// TODO
+		return false;
 	case Term::KeywordConst:
+		switch (term->data.keywordTerm.value) {
+		case Tokenizer::Keyword::True:
+			m_out << "push constant 1\n";
+			return true;
+		case Tokenizer::Keyword::False:
+		case Tokenizer::Keyword::Null:
+			m_out << "push constant 0\n";
+			return true;
+		case Tokenizer::Keyword::This:
+			// TODO
+		default:
+			return false;
+		}
 	case Term::Variable:
+		m_out << "push ";
+		return writeVar(term->data.variableTerm.identifier);
 	case Term::Array:
+		// TODO
+		return false;
 	case Term::Call:
+		return writeCall(term);
 	case Term::Bracketed:
 		return writeExpression(term->data.bracketTerm.content);
 	case Term::Unary:
+		if (!writeTerm(term->data.unaryTerm.content))
+			return false;
+		return writeUnary(term->data.unaryTerm.unaryOp);
 		break;
 	}
 	return false;
@@ -305,6 +363,40 @@ bool VmGenerator::writeOp(char op)
 	return false;
 }
 
+bool VmGenerator::writeUnary(char op)
+{
+	switch (op) {
+	case '-':
+		m_out << "neg\n";
+		return true;
+	case '~':
+		m_out << "not\n";
+		return true;
+	}
+	return false;
+}
+
+bool VmGenerator::writeVar(const std::string &var)
+{
+	auto it = m_symbols->get(var);
+	switch (it.kind)
+	{
+	case SymbolTable::Kind::Static:
+		m_out << "static " << it.name << "\n";
+		return true;
+	case SymbolTable::Kind::Argument:
+		m_out << "argument " << it.order << "\n";
+		return true;
+	case SymbolTable::Kind::Var:
+		m_out << "local " << it.order << "\n";
+		return true;
+	case SymbolTable::Kind::Field:
+		// TODO
+		break;
+	}
+	return false;
+}
+
 std::string VmGenerator::prepareCall(Term *term)
 {
 	std::string realTarget;
@@ -350,4 +442,12 @@ bool VmGenerator::setError(const std::string &err)
 std::string VmGenerator::fullName(const std::string &funcName) const
 {
 	return m_classContext + "." + funcName;
+}
+
+std::string VmGenerator::newLabelToken()
+{
+	std::stringstream ss;
+	ss << "$LABEL_";
+	ss << (m_nextLabelToken++);
+	return ss.str();
 }

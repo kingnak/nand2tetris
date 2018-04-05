@@ -34,6 +34,7 @@ public:
 
 	bool beginIf(Expression *cond, std::string &token) override;
 	bool insertElse(const std::string &token) override;
+	bool noElse(const std::string &token) override { return true; }
 	bool endIf(const std::string &token) override;
 
 	bool writeLet(Term *lhs, Expression *rhs) override;

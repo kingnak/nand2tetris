@@ -2,29 +2,10 @@
 
 #include "CodeGenerator.h"
 
-class SymbolTable;
-class CallTracer;
-
-class VmGeneratorFactory : public CodeGeneratorFactory
+class DebugGenerator : public CodeGenerator
 {
 public:
-	VmGeneratorFactory(bool debug);
-	~VmGeneratorFactory();
-	virtual CodeGenerator *create(std::ostream &out) override;
-	virtual std::string getOutFileName(std::string baseFileName) const override;
-
-private:
-	SymbolTable *m_rootSymbols;
-	CallTracer *m_tracer;
-	bool m_debug;
-};
-
-class VmGenerator : public CodeGenerator
-{
-public:
-	VmGenerator(std::ostream &out, SymbolTable *rootSymbols, CallTracer *tracer);
-	~VmGenerator();
-
+	DebugGenerator(CodeGenerator *inner, std::ostream &out);
 	virtual bool startClass(const std::string &name) override;
 	virtual bool endClass() override;
 	virtual bool declareStaticVariables(SymbolTable::Type type, const std::string &classType, const std::vector<std::string> &names) override;
@@ -54,32 +35,14 @@ public:
 	virtual bool writeReturn(Expression *ret) override;
 
 private:
-	bool doStartRoutine(SymbolTable::Kind kind, const std::string &funcName, SymbolTable::Type type, const std::string &clsType, bool asStatic);
-	bool doEndRoutine();
-
-	bool writeCall(Term *term);
-	bool writeTerm(Term *term);
-	bool writeExpression(Expression *ex);
-	bool writeOp(char op);
-	bool writeUnary(char op);
-	bool writeVar(const std::string &var);
-	std::string prepareCall(Term *term);
-
-private:
-	bool setError(const std::string &err);
-	std::string fullName(const std::string &funcName) const;
-	std::string newLabelToken();
+	void writeExpression(Expression *e);
+	void writeTerm(Term *t);
+	void writeCall(Term *t);
 
 private:
 	std::ostream &m_out;
-	SymbolTable *m_symbols;
-	CallTracer *m_tracer;
-	std::string m_error;
-
-	std::string m_classContext;
-	std::string m_thisContext;
+	CodeGenerator *m_inner;
 
 	std::string m_curFunc;
-
-	int m_nextLabelToken;
+	std::string m_curClass;
 };

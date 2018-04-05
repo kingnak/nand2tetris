@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 	} else if (c.isFlagSet(ExtendAnalyzeOnly)) {
 		factory = new AnalyzerGeneratorFactory(true);
 	} else {
-		factory = new VmGeneratorFactory;
+		factory = new VmGeneratorFactory(c.isDebug());
 	}
 
 	if (!factory && !tokenize) {

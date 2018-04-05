@@ -392,6 +392,8 @@ bool CompilerEngine::compileIf()
 		m_gen->insertElse(token);
 		if (!compileStatements())
 			return false;
+	} else {
+		m_gen->noElse(token);
 	}
 
 	m_gen->endIf(token);

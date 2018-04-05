@@ -147,6 +147,7 @@
   <ItemGroup>
     <ClCompile Include="AnalyzerGenerator.cpp" />
     <ClCompile Include="CompilerEngine.cpp" />
+    <ClCompile Include="DebugGenerator.cpp" />
     <ClCompile Include="Expression.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SymbolTable.cpp" />
@@ -157,6 +158,7 @@
     <ClInclude Include="AnalyzerGenerator.h" />
     <ClInclude Include="CodeGenerator.h" />
     <ClInclude Include="CompilerEngine.h" />
+    <ClInclude Include="DebugGenerator.h" />
     <ClInclude Include="Expression.h" />
     <ClInclude Include="SymbolTable.h" />
     <ClInclude Include="Tokenizer.h" />

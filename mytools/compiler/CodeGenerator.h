@@ -40,6 +40,7 @@ public:
 	virtual bool endWhile(const std::string &token) = 0;
 	virtual bool beginIf(Expression *cond, std::string &token) = 0;
 	virtual bool insertElse(const std::string &token) = 0;
+	virtual bool noElse(const std::string &token) = 0;
 	virtual bool endIf(const std::string &token) = 0;
 	
 	virtual bool writeLet(Term *lhs, Expression *rhs) = 0;
