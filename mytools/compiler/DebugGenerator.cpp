@@ -176,6 +176,11 @@ bool DebugGenerator::writeLet(Term *lhs, Expression *rhs)
 	m_out << "\n// let ";
 	if (lhs->type == Term::Variable) {
 		m_out << lhs->data.variableTerm.identifier;
+	} else if (lhs->type == Term::Array) {
+		m_out << lhs->data.arrayTerm.identifier;
+		m_out << '[';
+		writeExpression(lhs->data.arrayTerm.index);
+		m_out << ']';
 	}
 	m_out << " = ";
 	writeExpression(rhs);
@@ -216,6 +221,8 @@ void DebugGenerator::writeTerm(Term *term)
 		m_out << term->data.intTerm.value;
 		return;
 	case Term::StringConst:
+		m_out << '"' << term->data.stringTerm.value << '"';
+		return;
 	case Term::KeywordConst:
 		switch (term->data.keywordTerm.value) {
 		case Tokenizer::Keyword::True:
@@ -237,6 +244,10 @@ void DebugGenerator::writeTerm(Term *term)
 		m_out << term->data.variableTerm.identifier;
 		return;
 	case Term::Array:
+		m_out << term->data.arrayTerm.identifier;
+		m_out << '[';
+		writeExpression(term->data.arrayTerm.index);
+		m_out << ']';
 		return;
 	case Term::Call:
 		writeCall(term);

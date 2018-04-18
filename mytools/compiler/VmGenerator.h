@@ -79,6 +79,8 @@ private:
 	bool setError(const std::string &err);
 	std::string fullName(const std::string &funcName) const;
 	std::string newLabelToken();
+	bool createStringConst(const std::string &str);
+	bool writeArray(Term *term);
 
 private:
 	std::ostream &m_out;

@@ -236,8 +236,12 @@ bool VmGenerator::writeLet(Term *lhs, Expression *rhs)
 	if (lhs->type == Term::Variable) {
 		m_out << "pop ";
 		return writeVar(lhs->data.variableTerm.identifier);
+	} else if (lhs->type == Term::Array) {
+		if (!writeArray(lhs))
+			return false;
+		m_out << "pop that 0\n";
+		return true;
 	}
-	// TODO Array
 
 	return false;
 }
@@ -310,8 +314,7 @@ bool VmGenerator::writeTerm(Term *term)
 		m_out << "push constant " << term->data.intTerm.value << "\n";
 		return true;
 	case Term::StringConst:
-		// TODO
-		return false;
+		return createStringConst(term->data.stringTerm.value);
 	case Term::KeywordConst:
 		switch (term->data.keywordTerm.value) {
 		case Tokenizer::Keyword::True:
@@ -331,8 +334,10 @@ bool VmGenerator::writeTerm(Term *term)
 		m_out << "push ";
 		return writeVar(term->data.variableTerm.identifier);
 	case Term::Array:
-		// TODO
-		return false;
+		if (!writeArray(term))
+			return false;
+		m_out << "push that 0\n";
+		return true;
 	case Term::Call:
 		return writeCall(term);
 	case Term::Bracketed:
@@ -489,4 +494,33 @@ std::string VmGenerator::newLabelToken()
 	ss << "$LABEL_";
 	ss << (m_nextLabelToken++);
 	return ss.str();
+}
+
+bool VmGenerator::createStringConst(const std::string &str)
+{
+	m_out << "push constant " << str.length() << "\n";
+	m_out << "call String.new 1\n";
+	// new string is on stack
+	for (auto c : str) {
+		m_out << "push constant " << static_cast<unsigned int>(c) << "\n";
+		m_out << "call String.appendChar 2\n";
+		// String.appendChar returns the string, so it is still on stack
+	}
+	return true;
+}
+
+bool VmGenerator::writeArray(Term *term)
+{
+	if (term->type != Term::Array)
+		return false;
+	m_out << "push ";
+	if (!writeVar(term->data.arrayTerm.identifier))
+		return false;
+	// Write the index
+	if (!writeExpression(term->data.arrayTerm.index))
+		return false;
+	// Get full pointer into pointer
+	m_out << "add\n";
+	m_out << "pop pointer 1\n";
+	return true;
 }
