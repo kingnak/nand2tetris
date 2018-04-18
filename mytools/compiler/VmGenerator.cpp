@@ -2,7 +2,6 @@
 #include "DebugGenerator.h"
 #include "SymbolTable.h"
 #include "Expression.h"
-#include <algorithm>
 #include <sstream>
 
 VmGeneratorFactory::VmGeneratorFactory(bool debug)
@@ -35,6 +34,7 @@ std::string VmGeneratorFactory::getOutFileName(std::string baseFileName) const
 VmGenerator::VmGenerator(std::ostream &out, SymbolTable *rootSymbols, CallTracer *tracer)
 	: m_out(out)
 	, m_tracer(tracer)
+	, m_curFuncType(RoutineType::None)
 	, m_nextLabelToken(0)
 {
 	m_symbols = rootSymbols->createSubTable();
@@ -82,6 +82,7 @@ bool VmGenerator::declareFieldVariables(SymbolTable::Type type, const std::strin
 
 bool VmGenerator::startConstructor(const std::string &className, const std::string &funcName)
 {
+	m_curFuncType = RoutineType::Ctor;
 	m_thisContext = m_classContext;
 	return doStartRoutine(SymbolTable::Kind::Func, funcName, SymbolTable::Type::Class, m_classContext, true);
 }
@@ -93,6 +94,7 @@ bool VmGenerator::endConstructor()
 
 bool VmGenerator::startMethod(SymbolTable::Type retType, const std::string &retName, const std::string &funcName)
 {
+	m_curFuncType = RoutineType::Method;
 	m_thisContext = m_classContext;
 	return doStartRoutine(SymbolTable::Kind::Func, funcName, retType, retName, false);
 }
@@ -104,6 +106,7 @@ bool VmGenerator::endMethod()
 
 bool VmGenerator::startFunction(SymbolTable::Type retType, const std::string &retName, const std::string &funcName)
 {
+	m_curFuncType = RoutineType::Function;
 	return doStartRoutine(SymbolTable::Kind::Func, funcName, retType, retName, true);
 }
 
@@ -132,8 +135,27 @@ bool VmGenerator::finishLocals()
 	m_out << "function " << fullName(m_curFunc);
 
 	// Get number of locals
-	int ct = std::count_if(m_symbols->begin(), m_symbols->end(), [=](auto x)->bool {return x.second.kind == SymbolTable::Kind::Var; });
+	int ct = m_symbols->count(SymbolTable::Kind::Var);
 	m_out << " " << ct << "\n";
+
+	switch (m_curFuncType) {
+	case RoutineType::Ctor:
+	{
+		// Allocate this
+		int size = m_symbols->toParent()->count(SymbolTable::Kind::Field);
+		m_out << "push constant " << size << "\n";
+		m_out << "call Memory.alloc 1\n";
+		m_out << "pop pointer 0\n";
+		
+		break;
+	}
+	case RoutineType::Method:
+		// Initialize this
+		m_out << "push argument 0\n";
+		m_out << "pop pointer 0\n";
+		break;
+	}
+
 	return true;
 }
 
@@ -259,17 +281,25 @@ bool VmGenerator::doEndRoutine()
 	m_symbols = m_symbols->toParentAndDiscard();
 	m_thisContext.clear();
 	m_curFunc.clear();
+	m_curFuncType = RoutineType::None;
 	return true;
 }
 
 bool VmGenerator::writeCall(Term  *term)
 {
-	std::string target = prepareCall(term);
+	CallData data = prepareCall(term);
+	bool argAdd = 0;
+	if (!data.asStatic) {
+		// Push target, counts as argument
+		argAdd = 1;
+		m_out << "push ";
+		writeVar(data.obj);
+	}
 	for (auto e : term->data.callTerm.params) {
 		if (!writeExpression(e))
 			return false;
 	}
-	m_out << "call " << target << " " << term->data.callTerm.params.size() << "\n";
+	m_out << "call " << data.target << " " << term->data.callTerm.params.size()+argAdd << "\n";
 	return true;
 }
 
@@ -292,7 +322,8 @@ bool VmGenerator::writeTerm(Term *term)
 			m_out << "push constant 0\n";
 			return true;
 		case Tokenizer::Keyword::This:
-			// TODO
+			m_out << "push pointer 0\n";
+			return true;
 		default:
 			return false;
 		}
@@ -378,6 +409,10 @@ bool VmGenerator::writeUnary(char op)
 
 bool VmGenerator::writeVar(const std::string &var)
 {
+	if (var == "this") {
+		m_out << "pointer 0\n";
+		return true;
+	}
 	auto it = m_symbols->get(var);
 	switch (it.kind)
 	{
@@ -391,16 +426,17 @@ bool VmGenerator::writeVar(const std::string &var)
 		m_out << "local " << it.order << "\n";
 		return true;
 	case SymbolTable::Kind::Field:
-		// TODO
-		break;
+		m_out << "this " << it.order << "\n";
+		return true;
 	}
 	return false;
 }
 
-std::string VmGenerator::prepareCall(Term *term)
+VmGenerator::CallData VmGenerator::prepareCall(Term *term)
 {
 	std::string realTarget;
 	bool asStatic;
+	std::string obj;
 
 	if (term->data.callTerm.target.empty()) {
 		if (m_thisContext.empty()) {
@@ -409,10 +445,12 @@ std::string VmGenerator::prepareCall(Term *term)
 		} else {
 			asStatic = false;
 			realTarget = m_thisContext; // Always same as classContext...
+			obj = "this";
 		}
 	} else if (term->data.callTerm.target == "this") {
 		asStatic = false;
 		realTarget = m_thisContext; // Always same as classContext...
+		obj = "this";
 	} else {
 		SymbolTable::Symbol s = m_symbols->get(term->data.callTerm.target);
 		if (s.kind == SymbolTable::Kind::NONE) {
@@ -425,12 +463,13 @@ std::string VmGenerator::prepareCall(Term *term)
 		} else {
 			realTarget = s.classType;
 			asStatic = false;
+			obj = s.name;
 		}
 	}
 
 	std::string fullTarget = realTarget + "." + term->data.callTerm.function;
 	m_tracer->addCall(fullTarget, asStatic, {}, {}, 0);
-	return fullTarget;
+	return CallData{ fullTarget, asStatic, obj };
 }
 
 bool VmGenerator::setError(const std::string &err)

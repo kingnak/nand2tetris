@@ -67,7 +67,13 @@ private:
 	bool writeOp(char op);
 	bool writeUnary(char op);
 	bool writeVar(const std::string &var);
-	std::string prepareCall(Term *term);
+
+	struct CallData {
+		std::string target;
+		bool asStatic;
+		std::string obj;
+	};
+	CallData prepareCall(Term *term);
 
 private:
 	bool setError(const std::string &err);
@@ -86,4 +92,8 @@ private:
 	std::string m_curFunc;
 
 	int m_nextLabelToken;
+
+	enum class RoutineType {
+		None, Ctor, Method, Function
+	} m_curFuncType;
 };

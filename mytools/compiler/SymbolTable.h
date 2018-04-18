@@ -31,13 +31,11 @@ public:
 	SymbolTable *toParent();
 	SymbolTable *toParentAndDiscard();
 
+	int count(Kind k) const;
+
 private:
 	std::map<std::string, Symbol> m_syms;
 	SymbolTable *m_parent;
-	
-public:
-	auto begin() -> decltype(m_syms.cbegin()) { return m_syms.cbegin(); }
-	auto end() -> decltype(m_syms.cend()) { return m_syms.cend(); }
 };
 
 class CallTracer

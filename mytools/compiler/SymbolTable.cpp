@@ -1,4 +1,5 @@
 #include "SymbolTable.h"
+#include <algorithm>
 
 bool operator == (const SymbolTable::Symbol &s1, const std::string &s2)
 {
@@ -77,6 +78,11 @@ SymbolTable *SymbolTable::toParentAndDiscard()
 	SymbolTable *ret = m_parent;
 	delete this;
 	return ret;
+}
+
+int SymbolTable::count(Kind k) const
+{
+	return std::count_if(begin(m_syms), end(m_syms), [=](auto x)->bool {return x.second.kind == k; });
 }
 
 ///////////////////
