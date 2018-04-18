@@ -36,16 +36,17 @@ bool DebugGenerator::endClass()
 
 bool DebugGenerator::declareStaticVariables(SymbolTable::Type type, const std::string &classType, const std::vector<std::string> &names)
 {
+	bool ret = m_inner->declareStaticVariables(type, classType, names);
 	for (auto n : names)
-		m_out << "// static " << dataTypeName(type, classType) << "\n";
-	return m_inner->declareStaticVariables(type, classType, names);
+		m_out << "// static " << dataTypeName(type, classType) << " " << n << " (static " << symbols()->get(n).order << ")" << "\n";
+	return ret;
 }
 
 bool DebugGenerator::declareFieldVariables(SymbolTable::Type type, const std::string &classType, const std::vector<std::string> &names)
 {
 	bool ret = m_inner->declareFieldVariables(type, classType, names);
 	for (auto n : names)
-		m_out << "// field " << dataTypeName(type, classType) << " (this " << symbols()->get(n).order << ")" << "\n";
+		m_out << "// field " << dataTypeName(type, classType) << " " << n << " (this " << symbols()->get(n).order << ")" << "\n";
 	return ret;
 }
 
