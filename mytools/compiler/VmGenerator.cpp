@@ -117,8 +117,13 @@ bool VmGenerator::endFunction()
 
 bool VmGenerator::declareParameters(const std::vector<Parameter> &params)
 {
+	int off = 0;
+	// methods have this as argument 0, all other offset by 1!
+	if (m_curFuncType == RoutineType::Method)
+		off = 1;
+
 	for (auto p : params) {
-		if (!m_symbols->add(SymbolTable::Symbol{ SymbolTable::Kind::Argument, p.type, p.classType, p.name, 0 })) {
+		if (!m_symbols->add(SymbolTable::Symbol{ SymbolTable::Kind::Argument, p.type, p.classType, p.name, 0 }, off)) {
 			return setError("Dupicate symbol arg " + p.name);
 		}
 	}
@@ -422,7 +427,7 @@ bool VmGenerator::writeVar(const std::string &var)
 	switch (it.kind)
 	{
 	case SymbolTable::Kind::Static:
-		m_out << "static " << it.name << "\n";
+		m_out << "static " << it.order << "\n";
 		return true;
 	case SymbolTable::Kind::Argument:
 		m_out << "argument " << it.order << "\n";

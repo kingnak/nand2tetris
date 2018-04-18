@@ -38,7 +38,7 @@ SymbolTable::Symbol SymbolTable::get(const std::string &name) const
 	return Symbol();
 }
 
-bool SymbolTable::add(Symbol &s)
+bool SymbolTable::add(Symbol &s, int ordinalOffset)
 {
 	if (containsRecursive(s.name)) {
 		return false;
@@ -57,6 +57,7 @@ bool SymbolTable::add(Symbol &s)
 	}
 
 	s.order = maxOrder + 1;
+	if (s.order == 0) s.order = ordinalOffset;
 	m_syms.insert(make_pair(s.name, s));
 	return true;
 }

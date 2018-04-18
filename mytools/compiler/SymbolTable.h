@@ -25,7 +25,7 @@ public:
 	bool containsRecursive(const std::string &name) const;
 	Symbol get(const std::string &name) const;
 
-	bool add(Symbol &s);
+	bool add(Symbol &s, int ordinalOffset = 0);
 
 	SymbolTable *createSubTable();
 	SymbolTable *toParent();
