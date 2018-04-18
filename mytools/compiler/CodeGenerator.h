@@ -46,6 +46,8 @@ public:
 	virtual bool writeLet(Term *lhs, Expression *rhs) = 0;
 	virtual bool writeDo(Term *call) = 0;
 	virtual bool writeReturn(Expression *ret) = 0;
+
+	virtual const SymbolTable *symbols() const = 0;
 };
 
 class CodeGeneratorFactory

@@ -34,6 +34,10 @@ public:
 	virtual bool writeDo(Term *call) override;
 	virtual bool writeReturn(Expression *ret) override;
 
+	virtual const SymbolTable *symbols() const override {
+		return m_inner->symbols();
+	}
+
 private:
 	void writeExpression(Expression *e);
 	void writeTerm(Term *t);

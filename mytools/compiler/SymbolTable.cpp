@@ -10,12 +10,12 @@ bool operator < (const SymbolTable::Symbol &s1, const std::string &s2)
 	return s1.name < s2;
 }
 
-bool SymbolTable::contains(const std::string &name)
+bool SymbolTable::contains(const std::string &name) const
 {
 	return m_syms.find(name) != m_syms.end();
 }
 
-bool SymbolTable::containsRecursive(const std::string &name)
+bool SymbolTable::containsRecursive(const std::string &name) const
 {
 	if (!contains(name)) {
 		if (m_parent)
@@ -25,7 +25,7 @@ bool SymbolTable::containsRecursive(const std::string &name)
 	return true;
 }
 
-SymbolTable::Symbol SymbolTable::get(const std::string &name)
+SymbolTable::Symbol SymbolTable::get(const std::string &name) const
 {
 	auto it = m_syms.find(name);
 	if (it != m_syms.end()) {

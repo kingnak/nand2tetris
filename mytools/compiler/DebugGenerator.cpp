@@ -43,9 +43,10 @@ bool DebugGenerator::declareStaticVariables(SymbolTable::Type type, const std::s
 
 bool DebugGenerator::declareFieldVariables(SymbolTable::Type type, const std::string &classType, const std::vector<std::string> &names)
 {
+	bool ret = m_inner->declareFieldVariables(type, classType, names);
 	for (auto n : names)
-		m_out << "// field " << dataTypeName(type, classType) << "\n";
-	return m_inner->declareFieldVariables(type, classType, names);
+		m_out << "// field " << dataTypeName(type, classType) << " (this " << symbols()->get(n).order << ")" << "\n";
+	return ret;
 }
 
 bool DebugGenerator::startConstructor(const std::string &className, const std::string &funcName)
@@ -92,9 +93,10 @@ bool DebugGenerator::endFunction()
 
 bool DebugGenerator::declareParameters(const std::vector<Parameter> &params)
 {
+	bool ret = m_inner->declareParameters(params);
 	for (auto p : params)
-		m_out << "// param " << dataTypeName(p.type, p.classType) << " " << p.name << "\n";
-	return m_inner->declareParameters(params);
+		m_out << "// param " << dataTypeName(p.type, p.classType) << " " << p.name << " (arg " << symbols()->get(p.name).order << ")" << "\n";
+	return ret;
 }
 
 bool DebugGenerator::startSubroutineBody()
@@ -114,9 +116,10 @@ bool DebugGenerator::endSubroutineBody()
 
 bool DebugGenerator::declareVariable(SymbolTable::Type type, const std::string &classType, const std::vector<std::string> &names)
 {
+	bool ret = m_inner->declareVariable(type, classType, names);
 	for (auto n : names)
-		m_out << "// var " << dataTypeName(type, classType) << " " << n << "\n";
-	return m_inner->declareVariable(type, classType, names);
+		m_out << "// var " << dataTypeName(type, classType) << " " << n << " (local " << symbols()->get(n).order << ")" << "\n";
+	return ret;
 }
 
 bool DebugGenerator::startStatements()

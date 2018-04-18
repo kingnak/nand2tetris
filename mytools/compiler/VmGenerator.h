@@ -53,6 +53,10 @@ public:
 	virtual bool writeDo(Term *call) override;
 	virtual bool writeReturn(Expression *ret) override;
 
+	virtual const SymbolTable *symbols() const override {
+		return m_symbols;
+	}
+
 private:
 	bool doStartRoutine(SymbolTable::Kind kind, const std::string &funcName, SymbolTable::Type type, const std::string &clsType, bool asStatic);
 	bool doEndRoutine();

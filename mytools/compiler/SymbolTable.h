@@ -21,9 +21,9 @@ public:
 		int order = -1;
 	};
 
-	bool contains(const std::string &name);
-	bool containsRecursive(const std::string &name);
-	Symbol get(const std::string &name);
+	bool contains(const std::string &name) const;
+	bool containsRecursive(const std::string &name) const;
+	Symbol get(const std::string &name) const;
 
 	bool add(Symbol &s);
 
