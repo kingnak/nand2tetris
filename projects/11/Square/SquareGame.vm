@@ -1,0 +1,306 @@
+// class SquareGame
+// field Square (this 0)
+// field int (this 1)
+
+
+// constructor SquareGame new
+function SquareGame.new 0
+push constant 2
+call Memory.alloc 1
+pop pointer 0
+
+// let square = Square.new( 0,0,30 );
+push constant 0
+push constant 0
+push constant 30
+call Square.new 3
+pop this 0
+
+// let direction = 0;
+push constant 0
+pop this 1
+
+// return this;
+push pointer 0
+return
+// End of constructor new
+
+
+// method void dispose
+function SquareGame.dispose 0
+push argument 0
+pop pointer 0
+
+// do square.dispose( );
+push this 0
+call Square.dispose 1
+pop temp 0
+
+// do Memory.deAlloc( this );
+push pointer 0
+call Memory.deAlloc 1
+pop temp 0
+
+// return ;
+push constant 0
+return
+// End of method dispose
+
+
+// method void moveSquare
+function SquareGame.moveSquare 0
+push argument 0
+pop pointer 0
+
+// if (direction = 1) {
+push this 1
+push constant 1
+eq
+not
+if-goto $LABEL_0_False
+
+// do square.moveUp( );
+push this 0
+call Square.moveUp 1
+pop temp 0
+label $LABEL_0_False
+// }
+// end if
+label $LABEL_0_End
+
+// if (direction = 2) {
+push this 1
+push constant 2
+eq
+not
+if-goto $LABEL_1_False
+
+// do square.moveDown( );
+push this 0
+call Square.moveDown 1
+pop temp 0
+label $LABEL_1_False
+// }
+// end if
+label $LABEL_1_End
+
+// if (direction = 3) {
+push this 1
+push constant 3
+eq
+not
+if-goto $LABEL_2_False
+
+// do square.moveLeft( );
+push this 0
+call Square.moveLeft 1
+pop temp 0
+label $LABEL_2_False
+// }
+// end if
+label $LABEL_2_End
+
+// if (direction = 4) {
+push this 1
+push constant 4
+eq
+not
+if-goto $LABEL_3_False
+
+// do square.moveRight( );
+push this 0
+call Square.moveRight 1
+pop temp 0
+label $LABEL_3_False
+// }
+// end if
+label $LABEL_3_End
+
+// do Sys.wait( 5 );
+push constant 5
+call Sys.wait 1
+pop temp 0
+
+// return ;
+push constant 0
+return
+// End of method moveSquare
+
+
+// method void run
+// var char key (local 0)
+// var boolean exit (local 1)
+function SquareGame.run 2
+push argument 0
+pop pointer 0
+
+// let exit = false;
+push constant 0
+pop local 1
+
+// while (~exit) {
+label $LABEL_4_Start
+push local 1
+not
+not
+if-goto $LABEL_4_End
+
+// while (key = 0) {
+label $LABEL_5_Start
+push local 0
+push constant 0
+eq
+not
+if-goto $LABEL_5_End
+
+// let key = Keyboard.keyPressed( );
+call Keyboard.keyPressed 0
+pop local 0
+
+// do .moveSquare( );
+push pointer 0
+call SquareGame.moveSquare 1
+pop temp 0
+// }
+// end while
+goto $LABEL_5_Start
+label $LABEL_5_End
+
+// if (key = 81) {
+push local 0
+push constant 81
+eq
+not
+if-goto $LABEL_6_False
+
+// let exit = true;
+push constant 1
+pop local 1
+label $LABEL_6_False
+// }
+// end if
+label $LABEL_6_End
+
+// if (key = 90) {
+push local 0
+push constant 90
+eq
+not
+if-goto $LABEL_7_False
+
+// do square.decSize( );
+push this 0
+call Square.decSize 1
+pop temp 0
+label $LABEL_7_False
+// }
+// end if
+label $LABEL_7_End
+
+// if (key = 88) {
+push local 0
+push constant 88
+eq
+not
+if-goto $LABEL_8_False
+
+// do square.incSize( );
+push this 0
+call Square.incSize 1
+pop temp 0
+label $LABEL_8_False
+// }
+// end if
+label $LABEL_8_End
+
+// if (key = 131) {
+push local 0
+push constant 131
+eq
+not
+if-goto $LABEL_9_False
+
+// let direction = 1;
+push constant 1
+pop this 1
+label $LABEL_9_False
+// }
+// end if
+label $LABEL_9_End
+
+// if (key = 133) {
+push local 0
+push constant 133
+eq
+not
+if-goto $LABEL_10_False
+
+// let direction = 2;
+push constant 2
+pop this 1
+label $LABEL_10_False
+// }
+// end if
+label $LABEL_10_End
+
+// if (key = 130) {
+push local 0
+push constant 130
+eq
+not
+if-goto $LABEL_11_False
+
+// let direction = 3;
+push constant 3
+pop this 1
+label $LABEL_11_False
+// }
+// end if
+label $LABEL_11_End
+
+// if (key = 132) {
+push local 0
+push constant 132
+eq
+not
+if-goto $LABEL_12_False
+
+// let direction = 4;
+push constant 4
+pop this 1
+label $LABEL_12_False
+// }
+// end if
+label $LABEL_12_End
+
+// while (~(key = 0)) {
+label $LABEL_13_Start
+push local 0
+push constant 0
+eq
+not
+not
+if-goto $LABEL_13_End
+
+// let key = Keyboard.keyPressed( );
+call Keyboard.keyPressed 0
+pop local 0
+
+// do .moveSquare( );
+push pointer 0
+call SquareGame.moveSquare 1
+pop temp 0
+// }
+// end while
+goto $LABEL_13_Start
+label $LABEL_13_End
+// }
+// end while
+goto $LABEL_4_Start
+label $LABEL_4_End
+
+// return ;
+push constant 0
+return
+// End of method run
+// end class SquareGame
