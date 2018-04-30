@@ -88,15 +88,16 @@ class Memory {
 		let curPtr = 2048;
 		let curStart = peek(curPtr);
 		
-		while (curStart > 0 & freeStart > curStart) {
+		while ((curStart > 0) & (freeStart > curStart)) {
 			let curPtr = curStart+1;
 			let curStart = peek(curPtr);
 		}
 		
+		// Link freed seg after previous
 		do poke(o, curStart);
 		do poke(curPtr, freeStart);
 		
-		// TODO: Defragment
+		do Memory.defragment();
 		
 		return;
 		/*
@@ -106,4 +107,28 @@ class Memory {
 		return;
 		*/
     }
+	
+	function void defragment() {
+		var int curStart, curEnd, nextStart;
+		var int newSize;
+		
+		let curStart = peek(2048);
+		while (curStart > 0) {
+			let curEnd = curStart + peek(curStart) + 1;
+			let nextStart = peek(curStart+1);
+			
+			while (curEnd = nextStart) {
+				let newSize = peek(curStart) + peek(nextStart) + 1;
+				do poke(curStart, newSize);
+				do poke(curStart+1, peek(nextStart+1));
+				
+				let nextStart = peek(nextStart+1);
+				let curEnd = curStart + newSize + 1;
+			}
+			
+			let curStart = peek(curStart+1);
+		}
+		
+		return;
+	}
 }
