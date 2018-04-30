@@ -92,7 +92,21 @@ class Math {
 
     /** Returns the integer part of the square root of x. */
     function int sqrt(int x) {
-		return 0;
+		var int y, j;
+		var int f;
+		var int f2;
+		
+		let j = 7;
+		while (-1 < j) {
+			let f = y+_mask[j];
+			let f2 = f*f;
+			if ((0 < f2) & ~(x < f2)) {
+				let y = f;
+			}
+			let j = j-1;
+		}
+		
+		return y;
     }
 
     /** Returns the greater number. */
