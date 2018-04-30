@@ -1,0 +1,109 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Memory.jack
+
+/**
+ * This library provides two services: direct access to the computer's main
+ * memory (RAM), and allocation and recycling of memory blocks. The Hack RAM
+ * consists of 32,768 words, each holding a 16-bit binary number.
+ */ 
+class Memory {
+	// HEAP BASE = 2048
+	// HEAP SIZE = 14335
+
+	static Array _ram;
+	static int _freeList;
+
+    /** Initializes the class. */
+    function void init() {
+		let _ram = 0;
+		do poke(2048, 2049);	// FL Ptr at heap base
+		do poke(2049, 14334);	// Heap size at FL
+		do poke(2050, 0);		// Next free segment
+		return;
+    }
+
+    /** Returns the RAM value at the given address. */
+    function int peek(int address) {
+		return _ram[address];
+    }
+
+    /** Sets the RAM value at the given address to the given value. */
+    function void poke(int address, int value) {
+		let _ram[address] = value;
+		return;
+    }
+
+    /** Finds an available RAM block of the given size and returns
+     *  a reference to its base address. */
+    function int alloc(int size) {
+		
+		var int segPtr, seg, segSize, block, newSize, nextSeg;
+		
+		// Find free segment of sufficient size
+		let segPtr = 2048;
+		let seg = peek(segPtr);
+		let segSize = peek(seg);
+		while (size > segSize) {
+			let segPtr = seg+1;
+			let seg = peek(segPtr);
+			if (seg = 0) {
+				// Out of memory
+				do Sys.error(0);
+				return 0;
+			}
+			let segSize = peek(seg);
+		}
+		
+		// Store block
+		let block = seg+1;
+		
+		// Update free list
+		let newSize = segSize - size;
+		if (newSize = 0) {
+			// Just enough, let prevSeg point to my next seg
+			do poke(segPtr, peek(seg+1));
+		} else {
+			// Split segment. Previous pointer will point past me
+			let nextSeg = peek(seg+1);
+			let seg = seg + size + 1;
+			do poke(segPtr, seg);
+			do poke(seg, newSize-1);
+			do poke(seg+1, nextSeg);
+		}
+		
+		// Set block size and return
+		do poke(block-1, size);
+		return block;
+    }
+
+    /** De-allocates the given object (cast as an array) by making
+     *  it available for future allocations. */
+    function void deAlloc(Array o) {
+		// Link in in order
+		var int freeStart, curPtr, curStart;
+		
+		let freeStart = o-1;
+		let curPtr = 2048;
+		let curStart = peek(curPtr);
+		
+		while (curStart > 0 & freeStart > curStart) {
+			let curPtr = curStart+1;
+			let curStart = peek(curPtr);
+		}
+		
+		do poke(o, curStart);
+		do poke(curPtr, freeStart);
+		
+		// TODO: Defragment
+		
+		return;
+		/*
+		// Simple approach: just prepend to free list
+		do poke(o, peek(2048));
+		do poke(2048, o-1);
+		return;
+		*/
+    }
+}
