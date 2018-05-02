@@ -38,8 +38,11 @@ class Memory {
     /** Finds an available RAM block of the given size and returns
      *  a reference to its base address. */
     function int alloc(int size) {
-		
 		var int segPtr, seg, segSize, block, newSize, nextSeg;
+		
+		if (size < 0) {
+			do Sys.error(5); // Allocated memory size must be positive
+		}
 		
 		// Find free segment of sufficient size
 		let segPtr = 2048;
@@ -49,8 +52,10 @@ class Memory {
 			let segPtr = seg+1;
 			let seg = peek(segPtr);
 			if (seg = 0) {
-				// Out of memory
-				do Sys.error(0);
+				// Out of memory: Sys.error will allocate memory!
+				// Free everything...
+				do Memory.init();
+				do Sys.error(6); // Heap overflow
 				return 0;
 			}
 			let segSize = peek(seg);

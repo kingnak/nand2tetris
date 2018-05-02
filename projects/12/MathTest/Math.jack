@@ -64,6 +64,10 @@ class Math {
 		var int r, q;
 		var int n;
 		
+		if (y = 0) {
+			do Sys.error(3); // Division by zero
+		}
+		
 		// sign = (x<0) XOR (y<0))
 		let sign = ((x<0) | (y<0)) & ~((x<0) & (y<0));
 		let x = Math.abs(x);
@@ -95,6 +99,10 @@ class Math {
 		var int y, j;
 		var int f;
 		var int f2;
+		
+		if (x < 0) {
+			do Sys.error(4); // Cannot compute square root of a negative number
+		}
 		
 		let j = 7;
 		while (-1 < j) {
