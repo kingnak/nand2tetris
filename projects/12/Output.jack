@@ -207,6 +207,8 @@ class Output {
     /** Displays the given character at the cursor location,
      *  and advances the cursor one column forward. */
     function void printChar(char c) {
+		
+		/* Naive implementation, drawing pixel by pixel
 		var Array m;
 		var int x, y, i, j;
 		var int pattern, mask;
@@ -228,6 +230,48 @@ class Output {
 			}
 			
 			let i = i+1;
+		}
+		*/
+		
+		// Fast implementation, writing directly into screen buffer
+		var Array m;
+		var Array screen;
+		var int address;
+		var int i;
+		var int pattern, mask;
+		
+		// screen memory is 256x512 rows, in 16 bit values. So 1 row = 32 words.
+		// A char is a half word wide and 11 rows high
+		// Map even cols as is, and odd cols offset by half a word to the right.
+		// Base col = col/2
+		
+		let screen = 16384; // Address to array cast
+		
+		//let x = _col/2;
+		//let y = 11*_row * 32;
+		let address = (_col/2) + (11*_row * 32);
+		
+		if ((_col&1) = 1) {
+			// Mask for keeping left half of existing word 
+			let mask = 255;
+		} else {
+			// Mask for keeping right half of existing word
+			let mask = -256;
+		}
+		
+		let m = getMap(c);
+		while (i < 11) {
+			let pattern = m[i];
+			if ((_col&1) = 1) {
+				// odd column, move image to right
+				let pattern = 256*pattern;
+			}
+			
+			// Must OR into existing value!
+			let screen[address] = (screen[address]&mask) | pattern;
+			
+			let i = i+1;
+			let address = address + 32; // move to next line
 		}
 		
 		do __progressCursor();
