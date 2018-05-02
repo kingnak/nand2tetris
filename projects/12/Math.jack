@@ -8,13 +8,27 @@
  * Note: Jack compilers implement multiplication and division using OS method calls.
  */
 class Math {
+	static Array _mask;
 
     /** Initializes the library. */
     function void init() {
+		var int i, m;
+		let _mask = Array.new(16);
+		let m = 1;
+		while (i < 16) {
+			let _mask[i] = m;
+			let m = m+m;
+			let i = i+1;
+		}
+		return;
     }
 
     /** Returns the absolute value of x. */
     function int abs(int x) {
+		if (x < 0) {
+			return -x;
+		}
+		return x;
     }
 
     /** Returns the product of x and y. 
@@ -23,6 +37,21 @@ class Math {
      *  the Jack expressions x*y and multiply(x,y) return the same value.
      */
     function int multiply(int x, int y) {
+		var int r;
+		var int ct;
+		var int mask;
+		
+		let mask = 1;
+		
+		while (ct < 16) {
+			if ((y & mask) = mask) {
+				let r = r + x;
+			}
+			let ct = ct+1;
+			let x = x+x;
+			let mask = mask+mask;
+		}
+		return r;
     }
 
     /** Returns the integer part of x/y.
@@ -31,17 +60,76 @@ class Math {
      *  the Jack expressions x/y and divide(x,y) return the same value.
      */
     function int divide(int x, int y) {
+		var boolean sign;
+		var int r, q;
+		var int n;
+		
+		if (y = 0) {
+			do Sys.error(3); // Division by zero
+		}
+		
+		// sign = (x<0) XOR (y<0))
+		let sign = ((x<0) | (y<0)) & ~((x<0) & (y<0));
+		let x = Math.abs(x);
+		let y = Math.abs(y);
+		
+		// Long division algorithm
+		let n = 15;
+		while (-1 < n) {
+			let r = r+r;
+			if ((x&_mask[n]) > 0) {
+				let r = r+1;
+			}
+			
+			if (~(r < y)) {
+				let r = r - y;
+				let q = q + _mask[n];
+			}
+			let n = n-1;
+		}
+		
+		if (sign) {
+			return -q;
+		}
+		return q;
     }
 
     /** Returns the integer part of the square root of x. */
     function int sqrt(int x) {
+		var int y, j;
+		var int f;
+		var int f2;
+		
+		if (x < 0) {
+			do Sys.error(4); // Cannot compute square root of a negative number
+		}
+		
+		let j = 7;
+		while (-1 < j) {
+			let f = y+_mask[j];
+			let f2 = f*f;
+			if ((0 < f2) & ~(x < f2)) {
+				let y = f;
+			}
+			let j = j-1;
+		}
+		
+		return y;
     }
 
     /** Returns the greater number. */
     function int max(int a, int b) {
+		if (a < b) {
+			return b;
+		}
+		return a;
     }
 
     /** Returns the smaller number. */
     function int min(int a, int b) {
+		if (a < b) {
+			return a;
+		}
+		return b;
     }
 }

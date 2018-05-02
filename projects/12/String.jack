@@ -11,54 +11,166 @@
  * string-oriented operations.
  */
 class String {
+	field Array _data;
+	field int _len;
+	field int _cap;
 
     /** constructs a new empty string with a maximum length of maxLength
      *  and initial length of 0. */
     constructor String new(int maxLength) {
+		if (maxLength < 0) {
+			do Sys.error(14); // Maximum length must be non-negative
+		}
+		let _len = 0;
+		let _cap = maxLength;
+		if (maxLength = 0) { 
+			let _data = 0;
+		} else {
+			let _data = Array.new(maxLength);
+		}
+		return this;
     }
 
     /** Disposes this string. */
     method void dispose() {
+		if (~(_data = null)) {
+			do _data.dispose();
+		}
+		return;
     }
 
     /** Returns the current length of this string. */
     method int length() {
+		return _len;
     }
 
     /** Returns the character at the j-th location of this string. */
     method char charAt(int j) {
+		if (j < _len) {
+			return _data[j];
+		}
+		do Sys.error(15); // String index out of bounds
+		return 0;
     }
 
     /** Sets the character at the j-th location of this string to c. */
     method void setCharAt(int j, char c) {
+		if (j < _len) {
+			let _data[j] = c;
+		} else {
+			do Sys.error(16); // String index out of bounds
+		}
+		return;
     }
 
     /** Appends c to this string's end and returns this string. */
     method String appendChar(char c) {
+		if (~__appendChar(c)) {
+			do Sys.error(17); // String is full
+		}
+		return this;
     }
 
     /** Erases the last character from this string. */
     method void eraseLastChar() {
+		if (0 < _len) {
+			let _len = _len-1;
+		} else {
+			do Sys.error(18); // String is empty
+		}
+		return;
     }
 
     /** Returns the integer value of this string, 
      *  until a non-digit character is detected. */
     method int intValue() {
+		var int v;
+		var int i;
+		var char c;
+		var boolean neg;
+		
+		if (charAt(0) = 45) {
+			let neg = true;
+			let i = 1;
+		}
+		
+		while (i < _len) {
+			let c = _data[i];
+			let i = i+1;
+			if ((47 < c) & (c < 58)) {
+				let v = (v*10) + (c-48);
+			} else {
+				if (neg = true) {
+					return -v;
+				}
+				return v;
+			}
+		}
+		
+		if (neg = true) {
+			return -v;
+		}
+		return v;
     }
 
     /** Sets this string to hold a representation of the given value. */
     method void setInt(int val) {
+		let _len = 0;
+		
+		if (val < 0) {
+			let val = -val;
+			if (~__appendChar(45)) {
+				do Sys.error(19); // Insufficient string capacity
+			}
+		}
+		
+		do __buildNumber(val);
+		return;
     }
+	
+	method boolean __appendChar(char c) {
+		if (_len < _cap) {
+			let _data[_len] = c;
+			let _len = _len + 1;
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	method void __buildNumber(int val) {
+		var int q, mod;
+		var char c;
+		
+		if (val < 10) {
+			if (~__appendChar(val + 48)) {
+				do Sys.error(19); // Insufficient string capacity
+			}
+		} else {
+			let q = val / 10;
+			let mod = val - (q*10);
+			
+			do __buildNumber(q);
+			if (~__appendChar(mod + 48)) {
+				do Sys.error(19); // Insufficient string capacity
+			}
+		}
+		
+		return;
+	}
 
     /** Returns the new line character. */
     function char newLine() {
+		return 128;
     }
 
     /** Returns the backspace character. */
     function char backSpace() {
+		return 129;
     }
 
     /** Returns the double quote (") character. */
     function char doubleQuote() {
+		return 34;
     }
 }
