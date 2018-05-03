@@ -323,7 +323,8 @@ bool VmGenerator::writeTerm(Term *term)
 	case Term::KeywordConst:
 		switch (term->data.keywordTerm.value) {
 		case Tokenizer::Keyword::True:
-			m_out << "push constant 1\n";
+			m_out << "push constant 0\n";
+			m_out << "not\n";
 			return true;
 		case Tokenizer::Keyword::False:
 		case Tokenizer::Keyword::Null:
